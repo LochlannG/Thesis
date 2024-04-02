@@ -13,7 +13,7 @@
 % arrow keys to facilitate user controlled acceleration + Removed Support
 % for button presses
 % 0.7 - 11/03/2024 - Added other cars
-% 0.8 - 
+% 0.8 - 02/04/2024 - Added Git integration for better version control
 
 clc; clear; close all;
 
