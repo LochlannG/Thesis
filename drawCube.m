@@ -1,8 +1,8 @@
-function drawCyclist2(position, structure)
+function drawCube(position, structure)
 
     global GL
 
-    % Draw Cyclist
+    % Draw Cube
     glPushMatrix;
     glTranslatef(position(1), position(2), position(3))
     

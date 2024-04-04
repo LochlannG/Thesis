@@ -98,6 +98,20 @@ car2 = car;
 car2.x = -0.5*road.laneWidth;
 car2.chanceOfEnding = 0.15;
 
+% Centreline
+centreline = struct();
+centreline.width = 0.15;
+centreline.length = 3;
+centreline.vertexCoords = single([-centreline.width/2, 0, 0.1, ...
+                            centreline.width/2, 0, 0.1, ...
+                            centreline.width/2, centreline.length, 0.1, ...
+                            -centreline.width/2, centreline.length, 0.1]);                        % coOrds for each vertex
+centreline.vertexColors = single([1,  1,  1, ...
+                            1,  1,	1, ...
+                            1,  1,	1, ...
+                            1,  1,	1]);                                                    % colours at each vertex
+centreline.elementArray = int32([0, 1, 2, 3]);                                                % vertex numbers for the faces
+
 % Defining parameters - Camera
 camera = struct();
 camera.FOVY = 70;
@@ -144,44 +158,8 @@ keys.dw = KbName('DownArrow');
 keys.up = KbName('UpArrow');
 
 %%%%%%%%%%%%%%%%%%%%%
-%%% Handling pinging the EEG software
-
-% if test.recordEEG
-%     % EEG
-%     EEG.port_address = 'COM7';%'/dev/ttyUSB0';              % Address for parallel port. To find this, run: serialportlist("available")
-%     EEG.port_baud = 115200;
-%     EEG.port_dataBits = 8;
-%     EEG.port_stopBits = 1;
-%     EEG.port_parity = 'none';
-%     EEG.srate = 512;
-%     
-%     out = instrfind('Type', 'serial');
-%     for i=1:length(out), delete(out(i)); end
-%     % Connect to the port
-%     EEG.port_ioObj = serial(EEG.port_address,'BaudRate',EEG.port_baud,'DataBits',EEG.port_dataBits, 'StopBits', EEG.port_stopBits, 'Parity', EEG.port_parity);
-%     get(EEG.port_ioObj);       % Not sure if this is necessary, but Biosemi gave sample code that did it..
-%     
-%     % Open port
-%     fopen(EEG.port_ioObj);
-%     
-%     trigger = 29;
-%     fwrite(EEG.port_ioObj,trigger);
-%     
-%     %
-%     %     par.eeg_pPort = '4FF8';              % Address for parallel port (To find this, go to device manager -> ports. Right click on the parallel port and select properties. Go to the "resources" tab and the address is the the first element of the "I/O range".
-%     %     % set pulse duration, but this is only used for first lick to start
-%     %     % experiment. While the task is running it sets pll port high and moves
-%     %     % on, and next refresh it is set low if it is high.
-%     test.eeg_sRate = 512;                                                          % Sampling rate of EEG system in Hz
-%     test.eeg_waitTime = 2*ceil(1000/test.eeg_sRate)/1000;
-%     %
-%     %     ioObj = io64;
-%     %     status = io64(ioObj);
-%     %     % Parallel Port for triggers - set to zero to start
-%     %     port = hex2dec(par.eeg_pPort);
-%     %     io64(ioObj,port,0);
-% end
-
+%%% Handling pinging the EMG software
+% emg = EMGtriggers;
 
 while test.trials > 0
 
@@ -274,7 +252,10 @@ while test.trials > 0
         glClear();
     
         % Draw Road
-        drawRoad2([0, 0, 0], road)
+        drawSquare([0, 0, 0], road)
+
+        % Draw Centreline
+        drawSquare([0, 2, 0], centreline)
     
         % Handling Speed
         loop.roadLeft = loop.roadLeft - loop.carVCurrent*(1/scrn.frameRate);
@@ -303,7 +284,7 @@ while test.trials > 0
         loop.bikeYtoAppend = nan(test.nCyclists, 1);
         for stimInt = find(cyclist.stimOn, 1, "first"):find(cyclist.stimOn, 1, "last")
             % Draw the cyclist to the screen using the drawCyclist function
-            drawCyclist2([cyclist.x, cyclist.y(stimInt), 1], cyclist);
+            drawCube([cyclist.x, cyclist.y(stimInt), 1], cyclist);
     
             % update position based on relative speed and frame rate
             cyclist.y(stimInt) = cyclist.y(stimInt) - loop.bikeStep;
@@ -345,7 +326,7 @@ while test.trials > 0
         for stimInt = find(car.stimOn, 1, "first"):find(car.stimOn, 1, "last")
     
             % Draw the cyclist to the screen using the drawCyclist function
-            drawCyclist2([car.x, car.y(stimInt), 1], car);
+            drawCube([car.x, car.y(stimInt), 1], car);
     
             % update position based on relative speed and frame rate
             car.y(stimInt) = car.y(stimInt) - loop.oncomingCarStep;
@@ -382,7 +363,7 @@ while test.trials > 0
         for stimInt = find(car2.stimOn, 1, "first"):find(car2.stimOn, 1, "last")
     
             % Draw the cyclist to the screen using the drawCyclist function
-            drawCyclist2([car2.x, car2.y(stimInt), 1], car2);
+            drawCube([car2.x, car2.y(stimInt), 1], car2);
     
             % update position based on relative speed and frame rate
             car2.y(stimInt) = car2.y(stimInt) - loop.bikeStep;

@@ -1,4 +1,4 @@
-function drawRoad2(position, structure)
+function drawSquare(position, structure)
     
     global GL
 
