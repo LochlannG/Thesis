@@ -255,7 +255,9 @@ while test.trials > 0
         drawSquare([0, 0, 0], road)
 
         % Draw Centreline
-        drawSquare([0, 2, 0], centreline)
+        for i = 0:10
+            drawSquare([0, 0+i*(6), 0], centreline)
+        end
     
         % Handling Speed
         loop.roadLeft = loop.roadLeft - loop.carVCurrent*(1/scrn.frameRate);
