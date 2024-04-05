@@ -49,9 +49,10 @@ test.recordEEG = false;
 
 % This determines the length of the trail and the amount of various stimuli you
 % 'expect' to see come up
-test.lengthM = 200;                                                                    % Similar to a small journey to a shop
+test.lengthM = 2000;                                                                    % Similar to a small journey to a shop
 test.context = 'urban';
 test = setContext(test);
+test.debug = 0;
 
 % Defining parameters - Road
 road = struct();
@@ -74,8 +75,8 @@ cyclist = struct();
 cyclist.speed = 14/3.6;
 cyclist.start = 100; 
 cyclist.curbDist = 0.5;
-cyclist.potentialEnd = 30;
-cyclist.chanceOfEnding = 0.15;
+cyclist.potentialEnd = 10;
+cyclist.chanceOfEnding = 0.005;
 cyclist = createCylistVertexes(cyclist, 0.25, 1.5, 1, [0.46, 0.96, 0.26]);
 
 % Defining parameters - Car
@@ -84,7 +85,6 @@ car.startSpeed = 0;
 car.maxSpeed = 100/3.6;
 car.acceleration = ((100/3.6)/9);                                                       % We are assuming this car is a 2015 Golf which does 0-100 in 9 secs https://www.guideautoweb.com/en/articles/27805/volkswagen-golf-tdi-versus-golf-tsi-2015-two-tests-over-4-000-km/
 car.width = 1.8;
-car.potentialEnd = 5;
 car.lanePosRatio = 0.5;
 car.driverPosRatio = 0.5;
 car.overtakeWidth = 1;
@@ -96,16 +96,18 @@ car = createCylistVertexes(car, 1, 1.5, 1, [1, 0, 0]);
 % Car 2 - inflow traffic
 car2 = car;
 car2.x = -0.5*road.laneWidth;
-car2.chanceOfEnding = 0.15;
+car2.potentialEnd = 10;
+car2.chanceOfEnding = 0.005;
 
 % Centreline
 centreline = struct();
 centreline.width = 0.15;
 centreline.length = 3;
-centreline.vertexCoords = single([-centreline.width/2, 0, 0.1, ...
-                            centreline.width/2, 0, 0.1, ...
-                            centreline.width/2, centreline.length, 0.1, ...
-                            -centreline.width/2, centreline.length, 0.1]);                        % coOrds for each vertex
+centreline.y = 0:centreline.length*2:road.drawDist;
+centreline.vertexCoords = single([-centreline.width/2, 0, 0.01, ...
+                            centreline.width/2, 0, 0.01, ...
+                            centreline.width/2, centreline.length, 0.01, ...
+                            -centreline.width/2, centreline.length, 0.01]);                        % coOrds for each vertex
 centreline.vertexColors = single([1,  1,  1, ...
                             1,  1,	1, ...
                             1,  1,	1, ...
@@ -184,7 +186,7 @@ while test.trials > 0
     loop.roadLeft = test.lengthM;
     loop.setOvertake = false;
     loop.skipPlot = false;
-    loop.carVCurrent = 40/3.6;
+    loop.carVCurrent = 30/3.6;
     loop.timeStore = []; loop.bikeYStore = []; loop.carVStore = []; loop.roadStore = []; loop.carYStore =[]; loop.car2YStore =[]; loop.subjectXStore = [];
 
     %%%%%%%%%%%%%%%%%%%%%
@@ -252,11 +254,16 @@ while test.trials > 0
         glClear();
     
         % Draw Road
-        drawSquare([0, 0, 0], road)
+        drawOpenGLObject([0, 0, 0], road, "Square")
 
         % Draw Centreline
-        for i = 0:10
-            drawSquare([0, 0+i*(6), 0], centreline)
+        for i = 1:length(centreline.y)
+            drawOpenGLObject([0, centreline.y(i), 0], centreline, "Square")
+        end
+        centreline.y = centreline.y - loop.carVCurrent/scrn.frameRate;
+        if centreline.y(1) <= -3
+            centreline.y(1) = [];
+            centreline.y = [centreline.y centreline.y(end)+6];
         end
     
         % Handling Speed
@@ -276,7 +283,9 @@ while test.trials > 0
         % reaches the correct frame.
         if cyclist.stimStartM(cyclist.stimCurrent) >= loop.roadLeft
             cyclist.stimOn(cyclist.stimCurrent) = true;
-            disp("Cyclist Stimulus Begun at Frame = " + loop.currentFrame);
+            if test.debug == 1
+                disp("Cyclist Stimulus Begun at Frame = " + loop.currentFrame);
+            end
             if cyclist.stimCurrent < length(cyclist.stimStartM)
                 cyclist.stimCurrent = cyclist.stimCurrent + 1; 
             end
@@ -286,7 +295,7 @@ while test.trials > 0
         loop.bikeYtoAppend = nan(test.nCyclists, 1);
         for stimInt = find(cyclist.stimOn, 1, "first"):find(cyclist.stimOn, 1, "last")
             % Draw the cyclist to the screen using the drawCyclist function
-            drawCube([cyclist.x, cyclist.y(stimInt), 1], cyclist);
+            drawOpenGLObject([cyclist.x, cyclist.y(stimInt), 1], cyclist, "Cube");
     
             % update position based on relative speed and frame rate
             cyclist.y(stimInt) = cyclist.y(stimInt) - loop.bikeStep;
@@ -295,13 +304,17 @@ while test.trials > 0
             % have reached the end of the track
             if cyclist.y(stimInt) < 0
                 cyclist.stimOn(stimInt) = false;                        % Turn the stimulus off
-                disp(num2str(stimInt) + " finished track")      % Print message
+                if test.debug == 1
+                    disp(num2str(stimInt) + " finished track")      % Print message
+                end
             end
 
             if cyclist.y(stimInt) < cyclist.potentialEnd
                 if rand() < cyclist.chanceOfEnding
                     cyclist.stimOn(stimInt) = false;
-                    disp("In-flow Car #" + num2str(stimInt) + " turned off the track")
+                    if test.debug == 1
+                        disp("In-flow Car #" + num2str(stimInt) + " turned off the track")
+                    end
                 end
             end
     
@@ -317,7 +330,9 @@ while test.trials > 0
         % reaches the correct frame.
         if car.stimStartM(car.stimCurrent) >= loop.roadLeft
             car.stimOn(car.stimCurrent) = true;
-            disp("Oncoming car begun at frame = " + loop.currentFrame);
+            if test.debug == 1
+                disp("Oncoming car begun at frame = " + loop.currentFrame);
+            end
             if car.stimCurrent < length(car.stimStartM)
                 car.stimCurrent = car.stimCurrent + 1; 
             end
@@ -328,7 +343,7 @@ while test.trials > 0
         for stimInt = find(car.stimOn, 1, "first"):find(car.stimOn, 1, "last")
     
             % Draw the cyclist to the screen using the drawCyclist function
-            drawCube([car.x, car.y(stimInt), 1], car);
+            drawOpenGLObject([car.x, car.y(stimInt), 1], car, "Cube");
     
             % update position based on relative speed and frame rate
             car.y(stimInt) = car.y(stimInt) - loop.oncomingCarStep;
@@ -337,7 +352,9 @@ while test.trials > 0
             % have reached the end of the track so we can stop drawing it
             if car.y(stimInt) < 0
                 car.stimOn(stimInt) = false;                        % Turn the stimulus off
-                disp(num2str(stimInt) + " finished track")          % Print message
+                if test.debug == 1
+                    disp(num2str(stimInt) + " finished track")          % Print message
+                end
             end
     
             loop.carYToAppend(stimInt) = car.y(stimInt);
@@ -353,7 +370,9 @@ while test.trials > 0
         if test.nInFlowCars > 0
             if car2.stimStartM(car2.stimCurrent) >= loop.roadLeft
                 car2.stimOn(car2.stimCurrent) = true;
-                disp("Oncoming car begun at frame = " + loop.currentFrame);
+                if test.debug == 1
+                    disp("Oncoming car begun at frame = " + loop.currentFrame);
+                end
                 if car2.stimCurrent < length(car2.stimStartM)
                     car2.stimCurrent = car2.stimCurrent + 1; 
                 end
@@ -374,13 +393,17 @@ while test.trials > 0
             % have reached the end of the track
             if car2.y(stimInt) < 0
                 car2.stimOn(stimInt) = false;                        % Turn the stimulus off
-                disp(num2str(stimInt) + " finished track")          % Print message
+                if test.debug == 1
+                    disp(num2str(stimInt) + " finished track")          % Print message
+                end
             end
 
             if car2.y(stimInt) < car2.potentialEnd
                 if rand() < car2.chanceOfEnding
                     car2.stimOn(stimInt) = false;
-                    disp("In-flow Car #" + num2str(stimInt) + " turned off the track")
+                    if test.debug == 1
+                        disp("In-flow Car #" + num2str(stimInt) + " turned off the track")
+                    end
                 end
             end
     
@@ -397,8 +420,10 @@ while test.trials > 0
         Screen('Flip', scrn.win);
         Screen('BeginOpenGL', scrn.win);
     
-        % Inform the debug user    
-        disp("Current Frame     = " + loop.currentFrame)                                             % Useful for keeping track
+        % Inform the debug user
+        if test.debug == 1
+            disp("Current Frame     = " + loop.currentFrame)                                             % Useful for keeping track
+        end
     
         %%%%%%%%%%%%%%%%%%%%%
         %%% Handling Button Presses
@@ -413,7 +438,9 @@ while test.trials > 0
         end
         if all(keys.Code(keys.up))
             % Handles speeding up
-            disp("Speed Up")
+            if test.debug == 1
+                disp("Speed Up")
+            end
             loop.carVCurrent = loop.carVCurrent + car.acceleration*(1/scrn.frameRate);
             if loop.carVCurrent >= car.maxSpeed
                 loop.carVCurrent = car.maxSpeed;
@@ -422,7 +449,9 @@ while test.trials > 0
         end
         if all(keys.Code(keys.dw))
             % Handles slowing down
-            disp("Slow Down")
+            if test.debug == 1
+                disp("Slow Down")
+            end
             loop.carVCurrent = loop.carVCurrent - 5*car.acceleration*(1/scrn.frameRate);
             if loop.carVCurrent <= cyclist.speed
                 loop.carVCurrent = cyclist.speed;
@@ -431,13 +460,17 @@ while test.trials > 0
         end
         if all(keys.Code(keys.lt))
             % Handles moving back into your lane
-            disp("Back to lane")
+            if test.debug == 1
+                disp("Back to lane")
+            end
             loop.setOvertake = false;
     
         end
         if all(keys.Code(keys.rt))
             % Handles overtaking
-            disp("Overtake")
+            if test.debug == 1
+                disp("Overtake")
+            end
             loop.setOvertake = true;
     
         end

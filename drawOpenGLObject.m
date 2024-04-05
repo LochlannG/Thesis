@@ -1,4 +1,4 @@
-function drawSquare(position, structure)
+function drawOpenGLObject(position, structure, whatShape)
     
     global GL
 
@@ -12,7 +12,11 @@ function drawSquare(position, structure)
     glEnableClientState(GL.VERTEX_ARRAY);
     glEnableClientState(GL.COLOR_ARRAY);
     
-    glDrawElements(GL.QUADS, 4, GL.UNSIGNED_INT, structure.elementArray);
+    if whatShape == "Square"
+        glDrawElements(GL.QUADS, 4, GL.UNSIGNED_INT, structure.elementArray);
+    elseif whatShape == "Cube"
+        glDrawElements(GL.QUADS, 24, GL.UNSIGNED_INT, structure.elementArray);
+    end
 
     glDisableClientState(GL.VERTEX_ARRAY);
     glDisableClientState(GL.COLOR_ARRAY);
