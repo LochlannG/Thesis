@@ -1,4 +1,4 @@
-function [idx, logical] = generateStarts(testLengthM, startDistance, rate)
+function [idx, logical] = generateStarts(testLengthM, maxStartDistance, rate)
 % [idx, logical] = generateStarts(testLengthM, startDistance, rate)
 % Randomly generate a number of points in the sample space of testLengthM
 % determined by the rate parameter
@@ -23,7 +23,7 @@ function [idx, logical] = generateStarts(testLengthM, startDistance, rate)
         rate = 1;
     end
 
-    t = 0:1:testLengthM-startDistance;     % Generate a vector of meter points
+    t = 0:1:testLengthM-maxStartDistance;     % Generate a vector of meter points
     rt = poissrnd(rate);                 % randomly picks the number using a poisson
 
     % checks to ensure a stimulus is going to appear

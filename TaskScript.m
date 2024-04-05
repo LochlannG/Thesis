@@ -72,8 +72,6 @@ road.elementArray = int32([0, 1, 2, 3]);                                        
 
 % Defining parameters specificly to do with the cyclist
 cyclist = struct();
-cyclist.speed = 14/3.6;
-cyclist.start = 100; 
 cyclist.curbDist = 0.5;
 cyclist.potentialEnd = 10;
 cyclist.chanceOfEnding = 0.005;
@@ -130,19 +128,11 @@ noise.avK = 200;
 noise.maxSinF = 0.5;
 noise.minViewDistance = 10;
 
-% Defining parameters - EEG
-EEGparams.CORRECT     = 1;
-EEGparams.INCORRECT   = 2;
-EEGparams.TOOEARLY    = 3;
-EEGparams.TOOLATE     = 4;
-EEGparams.RELEASED    = 5;
-EEGparams.CD_BUTTONS = [12 13]; % Left and right mouse buttons
 
 %%%%%%%%%%%%%%%%%%%%%
 %%% Setting up variables for use in the loop
 % Generate sample stamps that mark when the 'cyclists' will appear
 cyclist.x = cyclist.curbDist-road.laneWidth;
-
 
 % loop structure to hold data about the main loop
 loop = struct();
@@ -192,11 +182,13 @@ while test.trials > 0
     %%%%%%%%%%%%%%%%%%%%%
     %%% Sets up trial loop variables for objects drawn to the screen
     % Sets up the cyclist variables for the trial loop
-    cyclist.stimStartM = generateStarts(test.lengthM, cyclist.start, test.rateCyclist*round(test.lengthM/1000));
+    cyclist.stimStartM = generateStarts(test.lengthM, 100, test.rateCyclist*round(test.lengthM/1000));
     cyclist.stimStartM = test.lengthM - cyclist.stimStartM;
     test.nCyclists = length(cyclist.stimStartM);
-    cyclist.stimEndM = rand(test.nCyclists, 1)*cyclist.potentialEnd;
-    cyclist.y = ones(test.nCyclists, 1)*cyclist.start;
+    cyclist.speed = getCyclistSpeed(14/3.6, 3/3.6, 2, test.nCyclists);
+    cyclist.start = getCyclistStart(test.nCyclists);
+%     cyclist.stimEndM = rand(test.nCyclists, 1)*cyclist.potentialEnd;
+    cyclist.y = ones(test.nCyclists, 1).*cyclist.start';
     cyclist.stimOn = false(test.nCyclists, 1);
     cyclist.stimCurrent = 1;
 
@@ -211,7 +203,7 @@ while test.trials > 0
     car2.stimStartM = test.lengthM - generateStarts(test.lengthM, car2.start, test.rateInFlowCar*round(test.lengthM/1000));
     test.nInFlowCars = length(car2.stimStartM);
     car2.stimCurrent = 1;
-    car2.stimEndM = rand(test.nInFlowCars, 1)*car2.potentialEnd;
+%     car2.stimEndM = rand(test.nInFlowCars, 1)*car2.potentialEnd;
     car2.y = ones(test.nInFlowCars, 1)*car.start;
     car2.stimOn = false(test.nInFlowCars, 1);
 
@@ -268,10 +260,10 @@ while test.trials > 0
     
         % Handling Speed
         loop.roadLeft = loop.roadLeft - loop.carVCurrent*(1/scrn.frameRate);
-        loop.relativeSpeed = loop.carVCurrent - cyclist.speed;                              % difference in speed (the velocities are aligned) between driver and bike
-        loop.bikeStep = loop.relativeSpeed/scrn.frameRate;                                  % the distance a bike will go in a frame
+%         loop.relativeSpeed = loop.carVCurrent - cyclist.speed;                              % difference in speed (the velocities are aligned) between driver and bike
+        loop.bikeStep = (loop.carVCurrent - cyclist.speed)/scrn.frameRate;                                  % the distance a bike will go in a frame
         loop.oncomingCarStep = (car.oncomingSpeed + loop.carVCurrent)/scrn.frameRate;
-        loop.inFlowCarStep = loop.relativeSpeed;
+        loop.inFlowCarStep = min(loop.bikeStep);
     
         loop.carVStore = [loop.carVStore, loop.carVCurrent];
         loop.roadStore = [loop.roadStore, loop.roadLeft];
@@ -298,7 +290,7 @@ while test.trials > 0
             drawOpenGLObject([cyclist.x, cyclist.y(stimInt), 1], cyclist, "Cube");
     
             % update position based on relative speed and frame rate
-            cyclist.y(stimInt) = cyclist.y(stimInt) - loop.bikeStep;
+            cyclist.y(stimInt) = cyclist.y(stimInt) - loop.bikeStep(stimInt);
     
             % If the y position of the 'cyclist' is less than 0 then it must
             % have reached the end of the track
@@ -387,7 +379,7 @@ while test.trials > 0
             drawCube([car2.x, car2.y(stimInt), 1], car2);
     
             % update position based on relative speed and frame rate
-            car2.y(stimInt) = car2.y(stimInt) - loop.bikeStep;
+            car2.y(stimInt) = car2.y(stimInt) - loop.inFlowCarStep;
     
             % If the y position of the 'cyclist' is less than 0 then it must
             % have reached the end of the track
@@ -453,8 +445,8 @@ while test.trials > 0
                 disp("Slow Down")
             end
             loop.carVCurrent = loop.carVCurrent - 5*car.acceleration*(1/scrn.frameRate);
-            if loop.carVCurrent <= cyclist.speed
-                loop.carVCurrent = cyclist.speed;
+            if loop.carVCurrent <= 0
+                loop.carVCurrent = 0;
             end
     
         end
