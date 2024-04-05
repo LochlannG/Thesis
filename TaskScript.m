@@ -74,7 +74,7 @@ road.elementArray = int32([0, 1, 2, 3]);                                        
 cyclist = struct();
 cyclist.curbDist = 0.5;
 cyclist.potentialEnd = 10;
-cyclist.chanceOfEnding = 0.005;
+cyclist.chanceOfEnding = 0.0005;
 cyclist = createCylistVertexes(cyclist, 0.25, 1.5, 1, [0.46, 0.96, 0.26]);
 
 % Defining parameters - Car
@@ -95,7 +95,7 @@ car = createCylistVertexes(car, 1, 1.5, 1, [1, 0, 0]);
 car2 = car;
 car2.x = -0.5*road.laneWidth;
 car2.potentialEnd = 10;
-car2.chanceOfEnding = 0.005;
+car2.chanceOfEnding = 0.0005;   % *100 for the chance of ending per frame
 
 % Centreline
 centreline = struct();
@@ -263,7 +263,7 @@ while test.trials > 0
 %         loop.relativeSpeed = loop.carVCurrent - cyclist.speed;                              % difference in speed (the velocities are aligned) between driver and bike
         loop.bikeStep = (loop.carVCurrent - cyclist.speed)/scrn.frameRate;                                  % the distance a bike will go in a frame
         loop.oncomingCarStep = (car.oncomingSpeed + loop.carVCurrent)/scrn.frameRate;
-        loop.inFlowCarStep = min(loop.bikeStep);
+        loop.inFlowCarStep = max(loop.bikeStep);
     
         loop.carVStore = [loop.carVStore, loop.carVCurrent];
         loop.roadStore = [loop.roadStore, loop.roadLeft];
@@ -502,7 +502,10 @@ Screen('CloseAll');
 %%
 %%%%%%%%%%%%%%%%%%%%%
 %%% Plotting Summary Results
+close all;
 if ~loop.skipPlot
-    close all;
     averageFrameRate = plotTrialSummary(loop.time{1}, loop.bikeY{1}, loop.carV{1}, noise.yNoise);
 end
+
+results.gravityCollisions = [0.15, 0.7, 0.8];           % order of R, G, B -> Car, Cyclist, Car2
+[results.bikeDist, results.carDist, results.car2Dist] = gravityScoring(loop, car, cyclist, car2, results.gravityCollisions);
