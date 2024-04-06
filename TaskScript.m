@@ -1,25 +1,11 @@
 % Task Code for the collection of data regarding driver-cyclist interaction
 % Written by Lochlann Gallagher
-% 0.1 - 18/02/2024 - Trying to work out the structure of OpenGL's
-% implementation in pyschtoolbo
-% x. Created the psychtoolbox structure and
-% drew in the axes. Created the 'road' object
-% 0.2 - 20/02/2024 - Added the cyclist back in
-% 0.3 - 21/02/2024 - Got the cyclist moving
-% 0.4 - 22/02/2024 - Created the noisey road stuff
-% 0.5 - 25/02/2024 - Allowed the car to accelarate + Gave the subject an
-% option to slow down
-% 0.6 - 11/03/2024 - Removed the uniform acceleration + Added support for
-% arrow keys to facilitate user controlled acceleration + Removed Support
-% for button presses
-% 0.7 - 11/03/2024 - Added other cars
-% 0.8 - 02/04/2024 - Added Git integration for better version control
 
 clc; clear; close all;
 
 AssertOpenGL;
 
-%%%%%%%%%%%%%%%%%%%%%
+%% %%%%%%%%%%%%%%%%%%%%
 %%% Pyschtoolbox setup
 
 PsychDefaultSetup(2);
@@ -53,6 +39,7 @@ test.lengthM = 2000;                                                            
 test.context = 'urban';
 test = setContext(test);
 test.debug = 0;
+test.discreteSpeed = true;
 
 % Defining parameters - Road
 road = struct();
@@ -74,14 +61,15 @@ road.elementArray = int32([0, 1, 2, 3]);                                        
 cyclist = struct();
 cyclist.curbDist = 0.5;
 cyclist.potentialEnd = 10;
-cyclist.chanceOfEnding = 0.0005;
+cyclist.chanceOfEnding = 0.001;
 cyclist = createCylistVertexes(cyclist, 0.25, 1.5, 1, [0.46, 0.96, 0.26]);
 
 % Defining parameters - Car
 car = struct();
 car.startSpeed = 0;
 car.maxSpeed = 100/3.6;
-car.acceleration = ((100/3.6)/9);                                                       % We are assuming this car is a 2015 Golf which does 0-100 in 9 secs https://www.guideautoweb.com/en/articles/27805/volkswagen-golf-tdi-versus-golf-tsi-2015-two-tests-over-4-000-km/
+car.continuousAcceleration = ((100/3.6)/9);                                                       % We are assuming this car is a 2015 Golf which does 0-100 in 9 secs https://www.guideautoweb.com/en/articles/27805/volkswagen-golf-tdi-versus-golf-tsi-2015-two-tests-over-4-000-km/
+car.discreteAcceleration = (5/3.6);
 car.width = 1.8;
 car.lanePosRatio = 0.5;
 car.driverPosRatio = 0.5;
@@ -95,7 +83,7 @@ car = createCylistVertexes(car, 1, 1.5, 1, [1, 0, 0]);
 car2 = car;
 car2.x = -0.5*road.laneWidth;
 car2.potentialEnd = 10;
-car2.chanceOfEnding = 0.0005;   % *100 for the chance of ending per frame
+car2.chanceOfEnding = 0.001;   % *100 for the chance of ending per frame
 
 % Centreline
 centreline = struct();
@@ -126,10 +114,11 @@ noise.nWaves = 5;
 noise.noiseAmp = 20;
 noise.avK = 200;
 noise.maxSinF = 0.5;
-noise.minViewDistance = 10;
+noise.minViewDistance = 20;
+noise.levels = [noise.minViewDistance, noise.minViewDistance*2, noise.minViewDistance*4];
 
 
-%%%%%%%%%%%%%%%%%%%%%
+%% %%%%%%%%%%%%%%%%%%%
 %%% Setting up variables for use in the loop
 % Generate sample stamps that mark when the 'cyclists' will appear
 cyclist.x = cyclist.curbDist-road.laneWidth;
@@ -149,10 +138,13 @@ keys.rt = KbName('RightArrow');
 keys.dw = KbName('DownArrow');
 keys.up = KbName('UpArrow');
 
-%%%%%%%%%%%%%%%%%%%%%
+%% %%%%%%%%%%%%%%%%%%%
 %%% Handling pinging the EMG software
 % emg = EMGtriggers;
 
+
+%% %%%%%%%%%%%%%%%%%%%
+%%% Main trial loop
 while test.trials > 0
 
     %%%%%%%%%%%%%%%%%%%%%
@@ -168,10 +160,14 @@ while test.trials > 0
         end
     end
 
-
     %%%%%%%%%%%%%%%%%%%%%
     %%% Sets/resets loop variables for the current trial
-    noise.yNoise = viewDistance(scrn.frameRate, test.lengthM, "WN", noise) + noise.minViewDistance;
+    if test.discreteSpeed
+        noise.yNoise = getDiscreteViewDist(noise.levels);
+    else
+        noise.yNoise = viewDistance(scrn.frameRate, test.lengthM, "WN", noise) + noise.minViewDistance;
+    end
+    
     loop.currentFrame = 1;
     loop.roadLeft = test.lengthM;
     loop.setOvertake = false;
@@ -187,7 +183,6 @@ while test.trials > 0
     test.nCyclists = length(cyclist.stimStartM);
     cyclist.speed = getCyclistSpeed(14/3.6, 3/3.6, 2, test.nCyclists);
     cyclist.start = getCyclistStart(test.nCyclists);
-%     cyclist.stimEndM = rand(test.nCyclists, 1)*cyclist.potentialEnd;
     cyclist.y = ones(test.nCyclists, 1).*cyclist.start';
     cyclist.stimOn = false(test.nCyclists, 1);
     cyclist.stimCurrent = 1;
@@ -203,7 +198,6 @@ while test.trials > 0
     car2.stimStartM = test.lengthM - generateStarts(test.lengthM, car2.start, test.rateInFlowCar*round(test.lengthM/1000));
     test.nInFlowCars = length(car2.stimStartM);
     car2.stimCurrent = 1;
-%     car2.stimEndM = rand(test.nInFlowCars, 1)*car2.potentialEnd;
     car2.y = ones(test.nInFlowCars, 1)*car.start;
     car2.stimOn = false(test.nInFlowCars, 1);
 
@@ -222,13 +216,20 @@ while test.trials > 0
         % Timing
         tic
         
+        % Flags for use during loop
+        loop.eventOverFlag = false;
+        
         %%%%%%%%%%%%%%%%%%%%%
         %%% Camera
     
         % Handles the setup of the perspective projection for the camera
         glMatrixMode(GL.PROJECTION);
         glLoadIdentity;
-        gluPerspective(70 , 1/scrn.ar, 0.1, noise.yNoise(loop.currentFrame));
+        if test.discreteSpeed
+            gluPerspective(70 , 1/scrn.ar, 0.1, noise.yNoise);
+        else
+            gluPerspective(70 , 1/scrn.ar, 0.1, noise.yNoise(loop.currentFrame));
+        end
     
         % Handles camera positioning & fixation
         if ~loop.setOvertake
@@ -260,7 +261,6 @@ while test.trials > 0
     
         % Handling Speed
         loop.roadLeft = loop.roadLeft - loop.carVCurrent*(1/scrn.frameRate);
-%         loop.relativeSpeed = loop.carVCurrent - cyclist.speed;                              % difference in speed (the velocities are aligned) between driver and bike
         loop.bikeStep = (loop.carVCurrent - cyclist.speed)/scrn.frameRate;                                  % the distance a bike will go in a frame
         loop.oncomingCarStep = (car.oncomingSpeed + loop.carVCurrent)/scrn.frameRate;
         loop.inFlowCarStep = max(loop.bikeStep);
@@ -296,6 +296,7 @@ while test.trials > 0
             % have reached the end of the track
             if cyclist.y(stimInt) < 0
                 cyclist.stimOn(stimInt) = false;                        % Turn the stimulus off
+                loop.eventOverFlag = true;
                 if test.debug == 1
                     disp(num2str(stimInt) + " finished track")      % Print message
                 end
@@ -304,6 +305,7 @@ while test.trials > 0
             if cyclist.y(stimInt) < cyclist.potentialEnd
                 if rand() < cyclist.chanceOfEnding
                     cyclist.stimOn(stimInt) = false;
+                    loop.eventOverFlag = true;
                     if test.debug == 1
                         disp("In-flow Car #" + num2str(stimInt) + " turned off the track")
                     end
@@ -371,7 +373,7 @@ while test.trials > 0
             end
         end
 
-        % This loop handles the movement of the 'car'
+        % This loop handles the movement of the 'car2'
         loop.car2YToAppend = nan(test.nInFlowCars, 1);
         for stimInt = find(car2.stimOn, 1, "first"):find(car2.stimOn, 1, "last")
     
@@ -385,6 +387,7 @@ while test.trials > 0
             % have reached the end of the track
             if car2.y(stimInt) < 0
                 car2.stimOn(stimInt) = false;                        % Turn the stimulus off
+                loop.eventOverFlag = true;
                 if test.debug == 1
                     disp(num2str(stimInt) + " finished track")          % Print message
                 end
@@ -393,6 +396,7 @@ while test.trials > 0
             if car2.y(stimInt) < car2.potentialEnd
                 if rand() < car2.chanceOfEnding
                     car2.stimOn(stimInt) = false;
+                    loop.eventOverFlag = true;
                     if test.debug == 1
                         disp("In-flow Car #" + num2str(stimInt) + " turned off the track")
                     end
@@ -410,63 +414,55 @@ while test.trials > 0
         % Flipping to the screen
         Screen('EndOpenGL', scrn.win);
         Screen('Flip', scrn.win);
+        
+            
+        %%%%%%%%%%%%%%%%%%%%%
+        %%% Handling Button Presses
+        % Allows speeding up and slowing down in a discrete manner
+        % following an event
+        if test.discreteSpeed
+            if loop.eventOverFlag
+                % Handles when an event has just occured
+                
+                % Change the distance of the 
+                yNoise = getDiscreteViewDist(noise.levels);
+                
+                while true
+                    % Displays a message to the user
+                    textString = ['Event passed, use the up and down keys to set the new speed' '\nSpeed: ' num2str(loop.carVCurrent*3.6) '\nPress return to continue'];
+                    DrawFormattedText(scrn.win, textString, 'center', 'center', scrn.whit);
+                    Screen('Flip', scrn.win)
+                    
+                    % Handles Button Presses
+                    loop = checkKey(loop, keys, test, car, scrn, [0, 1, 1, 1, 0, 0]);
+                    if loop.breakFlag == true
+                        break;
+                    end 
+                end
+            else
+                % Handles when an event has not occured
+                
+                % Handles Button Presses
+                loop = checkKey(loop, keys, test, car, scrn, [1, 0, 0, 1, 1, 1]);
+                if loop.breakFlag == true
+                    break;
+                end 
+            end
+        else
+            % Handles Button Presses
+            loop = checkKey(loop, keys, test, car, scrn, [1, 1, 1, 1, 1, 1]);
+            if loop.breakFlag == true
+                break;
+            end 
+        end
+        
         Screen('BeginOpenGL', scrn.win);
     
         % Inform the debug user
         if test.debug == 1
             disp("Current Frame     = " + loop.currentFrame)                                             % Useful for keeping track
-        end
-    
-        %%%%%%%%%%%%%%%%%%%%%
-        %%% Handling Button Presses
-    
-        % Handles Button Presses
-        [~, ~, keys.Code] = KbCheck;
-        if all(keys.Code(keys.escape))
-            % Handles the escape key
-            loop.skipPlot = true;
-            loop.escapeFlag = true;
-            break;
-        end
-        if all(keys.Code(keys.up))
-            % Handles speeding up
-            if test.debug == 1
-                disp("Speed Up")
-            end
-            loop.carVCurrent = loop.carVCurrent + car.acceleration*(1/scrn.frameRate);
-            if loop.carVCurrent >= car.maxSpeed
-                loop.carVCurrent = car.maxSpeed;
-            end
-    
-        end
-        if all(keys.Code(keys.dw))
-            % Handles slowing down
-            if test.debug == 1
-                disp("Slow Down")
-            end
-            loop.carVCurrent = loop.carVCurrent - 5*car.acceleration*(1/scrn.frameRate);
-            if loop.carVCurrent <= 0
-                loop.carVCurrent = 0;
-            end
-    
-        end
-        if all(keys.Code(keys.lt))
-            % Handles moving back into your lane
-            if test.debug == 1
-                disp("Back to lane")
-            end
-            loop.setOvertake = false;
-    
-        end
-        if all(keys.Code(keys.rt))
-            % Handles overtaking
-            if test.debug == 1
-                disp("Overtake")
-            end
-            loop.setOvertake = true;
-    
-        end
-        
+        end    
+
         %%%%%%%%%%%%%%%%%%%%%
         %%% Handling Loop Processes
     
