@@ -12,55 +12,16 @@ InitializeMatlabOpenGL(0, 0, 0, 0);                                             
 scrn = setupPsychTLBX();
 
 % Defining parameters governing the length of the test
-test = struct();
-test.trials = 2;
-test.recordEEG = false;
+test = setupTest();
 
-% This determines the length of the trail and the amount of various stimuli you
-% 'expect' to see come up
-test.lengthM = 2000;                                                                    % Similar to a small journey to a shop
-test.context = 'urban';
-test = setContext(test);
-test.debug = 0;
-test.discreteSpeed = true;
-
-% Defining parameters - Road
-road = struct();
-road.centreLineWidth = 0.05;
-road.drawDist = 80;
-road.laneWidth = 2.5;
-road.totalWidth = road.laneWidth*2;                                                     % RSA local road standard
-road.vertexCoords = single([-road.laneWidth, 0, 0, ...
-                            road.laneWidth, 0, 0, ...
-                            road.laneWidth, road.drawDist, 0, ...
-                            -road.laneWidth, road.drawDist, 0]);                        % coOrds for each vertex
-road.vertexColors = single([0.29, 0.29,	0.31, ...
-                            0.29, 0.29,	0.31, ...
-                            0.29, 0.29,	0.31, ...
-                            0.29, 0.29,	0.31]);                                                    % colours at each vertex
-road.elementArray = int32([0, 1, 2, 3]);                                                % vertex numbers for the faces
+% Setup road & centreline
+[road, centreline] = setupRoad();
 
 % Defining parameters specificly to do with the cyclist
-cyclist = struct();
-cyclist.curbDist = 0.5;
-cyclist.potentialEnd = 10;
-cyclist.chanceOfEnding = 0.001;
-cyclist = createCylistVertexes(cyclist, 0.25, 1.5, 1, [0.46, 0.96, 0.26]);
+cyclist = setupCyclist(road);
 
 % Defining parameters - Car
-car = struct();
-car.startSpeed = 0;
-car.maxSpeed = 100/3.6;
-car.continuousAcceleration = ((100/3.6)/9);                                                       % We are assuming this car is a 2015 Golf which does 0-100 in 9 secs https://www.guideautoweb.com/en/articles/27805/volkswagen-golf-tdi-versus-golf-tsi-2015-two-tests-over-4-000-km/
-car.discreteAcceleration = (5/3.6);
-car.width = 1.8;
-car.lanePosRatio = 0.5;
-car.driverPosRatio = 0.5;
-car.overtakeWidth = 1;
-car.oncomingSpeed = car.maxSpeed;
-car.start = 100;
-car.x = 0.5*road.laneWidth;
-car = createCylistVertexes(car, 1, 1.5, 1, [1, 0, 0]);
+car = setupCar(road);
 
 % Car 2 - inflow traffic
 car2 = car;
@@ -68,46 +29,17 @@ car2.x = -0.5*road.laneWidth;
 car2.potentialEnd = 10;
 car2.chanceOfEnding = 0.001;   % *100 for the chance of ending per frame
 
-% Centreline
-centreline = struct();
-centreline.width = 0.15;
-centreline.length = 3;
-centreline.y = 0:centreline.length*2:road.drawDist;
-centreline.vertexCoords = single([-centreline.width/2, 0, 0.01, ...
-                            centreline.width/2, 0, 0.01, ...
-                            centreline.width/2, centreline.length, 0.01, ...
-                            -centreline.width/2, centreline.length, 0.01]);                        % coOrds for each vertex
-centreline.vertexColors = single([1,  1,  1, ...
-                            1,  1,	1, ...
-                            1,  1,	1, ...
-                            1,  1,	1]);                                                    % colours at each vertex
-centreline.elementArray = int32([0, 1, 2, 3]);                                                % vertex numbers for the faces
-
 % Defining parameters - Camera
-camera = struct();
-camera.FOVY = 70;
-camera.driverZ = 1.5;                                                             % between [1.05, 2]
-camera.xyz = driverPosition(camera, car, road);
-camera.fixPoint = [0, 100, 0];
-camera.upVec = [0, 0, 1];
+camera = setupCamera(car, road);
 
 % Defining parameters - Noise
-noise.limits = [0, 50];                                      % range limits for the generation of noise (caution: don't use negative values)
-noise.nWaves = 5;
-noise.noiseAmp = 20;
-noise.avK = 200;
-noise.maxSinF = 0.5;
-noise.minViewDistance = 20;
-noise.levels = [noise.minViewDistance, noise.minViewDistance*2, noise.minViewDistance*4];
-
+noise = setupNoise();
 
 %% %%%%%%%%%%%%%%%%%%%
 %%% Setting up variables for use in the loop
-% Generate sample stamps that mark when the 'cyclists' will appear
-cyclist.x = cyclist.curbDist-road.laneWidth;
 
 % loop structure to hold data about the main loop
-loop = setupLoop
+loop = setupLoop();
 
 % Get key names
 keys = setupKeys();
@@ -115,7 +47,6 @@ keys = setupKeys();
 %% %%%%%%%%%%%%%%%%%%%
 %%% Handling pinging the EMG software
 % emg = EMGtriggers;
-
 
 %% %%%%%%%%%%%%%%%%%%%
 %%% Main trial loop
@@ -135,7 +66,7 @@ while test.trials > 0
     end
 
     %%%%%%%%%%%%%%%%%%%%%
-    %%% Sets/resets loop variables for the current trial
+    %%% Sets/resets loop variables for the new trial
     if test.discreteSpeed
         noise.yNoise = getDiscreteViewDist(noise.levels);
     else
@@ -332,55 +263,8 @@ while test.trials > 0
     
         %%%%%%%%%%%%%%%%%%%%%
         %%% Drawing other in flow cars
-    
-        % This loop handles the logic turning a 'car2' stimulus on when it
-        % reaches the correct frame.
-        if test.nInFlowCars > 0
-            if car2.stimStartM(car2.stimCurrent) >= loop.roadLeft
-                car2.stimOn(car2.stimCurrent) = true;
-                if test.debug == 1
-                    disp("Oncoming car begun at frame = " + loop.currentFrame);
-                end
-                if car2.stimCurrent < length(car2.stimStartM)
-                    car2.stimCurrent = car2.stimCurrent + 1; 
-                end
-            end
-        end
-
-        % This loop handles the movement of the 'car2'
-        loop.car2YToAppend = nan(test.nInFlowCars, 1);
-        for stimInt = find(car2.stimOn, 1, "first"):find(car2.stimOn, 1, "last")
-    
-            % Draw the cyclist to the screen using the drawCyclist function
-            drawCube([car2.x, car2.y(stimInt), 1], car2);
-    
-            % update position based on relative speed and frame rate
-            car2.y(stimInt) = car2.y(stimInt) - loop.inFlowCarStep;
-    
-            % If the y position of the 'cyclist' is less than 0 then it must
-            % have reached the end of the track
-            if car2.y(stimInt) < 0
-                car2.stimOn(stimInt) = false;                        % Turn the stimulus off
-                loop.eventOverFlag = true;
-                if test.debug == 1
-                    disp(num2str(stimInt) + " finished track")          % Print message
-                end
-            end
-
-            if car2.y(stimInt) < car2.potentialEnd
-                if rand() < car2.chanceOfEnding
-                    car2.stimOn(stimInt) = false;
-                    loop.eventOverFlag = true;
-                    if test.debug == 1
-                        disp("In-flow Car #" + num2str(stimInt) + " turned off the track")
-                    end
-                end
-            end
-    
-            loop.car2YToAppend(stimInt) = car2.y(stimInt);
-        end
-
-        loop.car2YStore = [loop.car2YStore, loop.car2YToAppend];
+        % function call to go here
+        [loop, car2, test, loop.car2YStore] = drawAndMoveObject(car2, loop, test);
     
         %%%%%%%%%%%%%%%%%%%%%
         %%% Drawing to Screen
@@ -389,7 +273,6 @@ while test.trials > 0
         Screen('EndOpenGL', scrn.win);
         Screen('Flip', scrn.win);
         
-            
         %%%%%%%%%%%%%%%%%%%%%
         %%% Handling Button Presses
         % Allows speeding up and slowing down in a discrete manner
@@ -402,7 +285,7 @@ while test.trials > 0
                 loop.setOvertake = false;
                 
                 % Change the distance that the camera can see
-                yNoise = getDiscreteViewDist(noise.levels);
+                noise.yNoise = getDiscreteViewDist(noise.levels);
                 
                 while true
                     % Displays a message to the user
@@ -481,4 +364,4 @@ if ~loop.skipPlot
 end
 
 results.gravityCollisions = [0.15, 0.7, 0.8];           % order of R, G, B -> Car, Cyclist, Car2
-[results.bikeDist, results.carDist, results.car2Dist] = gravityScoring(loop, car, cyclist, car2, results.gravityCollisions);
+[results.bikeDist, results.carDist, results.car2Dist] = plotGravityScoring(loop, car, cyclist, car2, results.gravityCollisions);

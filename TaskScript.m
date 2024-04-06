@@ -18,27 +18,25 @@ test = setupTest();
 [road, centreline] = setupRoad();
 
 % Defining parameters specificly to do with the cyclist
-cyclist = setupCyclist();
+cyclist = setupCyclist(road);
 
-% Defining parameters - Car
-car = setupCar(road);
+% Defining parameters - towardsCar
+towardsCar = setupCar(road);
 
-% Car 2 - inflow traffic
-car2 = car;
-car2.x = -0.5*road.laneWidth;
-car2.potentialEnd = 10;
-car2.chanceOfEnding = 0.001;   % *100 for the chance of ending per frame
+% towardsCar 2 - inflow traffic
+withCar = towardsCar;
+withCar.x = -0.5*road.laneWidth;
+withCar.potentialEnd = 10;
+withCar.chanceOfEnding = 0.001;   % *100 for the chance of ending per frame
 
 % Defining parameters - Camera
-camera = setupCamera(car, road);
+camera = setupCamera(towardsCar, road);
 
 % Defining parameters - Noise
 noise = setupNoise();
 
 %% %%%%%%%%%%%%%%%%%%%
 %%% Setting up variables for use in the loop
-% Generate sample stamps that mark when the 'cyclists' will appear
-cyclist.x = cyclist.curbDist-road.laneWidth;
 
 % loop structure to hold data about the main loop
 loop = setupLoop();
@@ -49,7 +47,6 @@ keys = setupKeys();
 %% %%%%%%%%%%%%%%%%%%%
 %%% Handling pinging the EMG software
 % emg = EMGtriggers;
-
 
 %% %%%%%%%%%%%%%%%%%%%
 %%% Main trial loop
@@ -69,7 +66,7 @@ while test.trials > 0
     end
 
     %%%%%%%%%%%%%%%%%%%%%
-    %%% Sets/resets loop variables for the current trial
+    %%% Sets/resets loop variables for the new trial
     if test.discreteSpeed
         noise.yNoise = getDiscreteViewDist(noise.levels);
     else
@@ -88,7 +85,8 @@ while test.trials > 0
     % Sets up the cyclist variables for the trial loop
     cyclist.stimStartM = generateStarts(test.lengthM, 100, test.rateCyclist*round(test.lengthM/1000));
     cyclist.stimStartM = test.lengthM - cyclist.stimStartM;
-    test.nCyclists = length(cyclist.stimStartM);
+    cyclist.n = length(cyclist.stimStartM);
+    test.nCyclists = cyclist.n;
     cyclist.speed = getCyclistSpeed(14/3.6, 3/3.6, 2, test.nCyclists);
     cyclist.start = getCyclistStart(test.nCyclists);
     cyclist.y = ones(test.nCyclists, 1).*cyclist.start';
@@ -96,18 +94,20 @@ while test.trials > 0
     cyclist.stimCurrent = 1;
 
     % Sets up the oncoming traffic variables for the trial loop
-    car.stimStartM = test.lengthM - generateStarts(test.lengthM, car.start, test.rateOncomingCar*round(test.lengthM/1000));
-    test.nOncomingCars = length(car.stimStartM);
-    car.stimCurrent = 1;
-    car.y = ones(test.nOncomingCars, 1)*car.start;
-    car.stimOn = false(test.nOncomingCars, 1);
+    towardsCar.stimStartM = test.lengthM - generateStarts(test.lengthM, towardsCar.start, test.rateOncomingCar*round(test.lengthM/1000));
+    towardsCar.n = length(towardsCar.stimStartM);
+    test.nOncomingCars = towardsCar.n;
+    towardsCar.stimCurrent = 1;
+    towardsCar.y = ones(test.nOncomingCars, 1)*towardsCar.start;
+    towardsCar.stimOn = false(test.nOncomingCars, 1);
 
     % Sets up the in flow traffic variables for the trial loop
-    car2.stimStartM = test.lengthM - generateStarts(test.lengthM, car2.start, test.rateInFlowCar*round(test.lengthM/1000));
-    test.nInFlowCars = length(car2.stimStartM);
-    car2.stimCurrent = 1;
-    car2.y = ones(test.nInFlowCars, 1)*car.start;
-    car2.stimOn = false(test.nInFlowCars, 1);
+    withCar.stimStartM = test.lengthM - generateStarts(test.lengthM, withCar.start, test.rateInFlowCar*round(test.lengthM/1000));
+    withCar.n = length(towardsCar.stimStartM);
+    test.nInFlowCars = withCar.n;
+    withCar.stimCurrent = 1;
+    withCar.y = ones(test.nInFlowCars, 1)*towardsCar.start;
+    withCar.stimOn = false(test.nInFlowCars, 1);
 
     %%%%%%%%%%%%%%%%%%%%%
     %%% OpenGL setup
@@ -144,8 +144,8 @@ while test.trials > 0
             gluLookAt(camera.xyz(1), camera.xyz(2), camera.xyz(3), camera.fixPoint(1), camera.fixPoint(2), camera.fixPoint(3), camera.upVec(1), camera.upVec(2), camera.upVec(3));
             loop.subjectXStore= [loop.subjectXStore, camera.xyz(1)];    % Stores the x position of the camera
         elseif loop.setOvertake
-            gluLookAt(camera.xyz(1)+car.overtakeWidth, camera.xyz(2), camera.xyz(3), camera.fixPoint(1), camera.fixPoint(2), camera.fixPoint(3), camera.upVec(1), camera.upVec(2), camera.upVec(3));
-            loop.subjectXStore= [loop.subjectXStore, camera.xyz(1)+car.overtakeWidth];  % Stores the x position of the camera
+            gluLookAt(camera.xyz(1)+towardsCar.overtakeWidth, camera.xyz(2), camera.xyz(3), camera.fixPoint(1), camera.fixPoint(2), camera.fixPoint(3), camera.upVec(1), camera.upVec(2), camera.upVec(3));
+            loop.subjectXStore= [loop.subjectXStore, camera.xyz(1)+towardsCar.overtakeWidth];  % Stores the x position of the camera
         end
     
         %%%%%%%%%%%%%%%%%%%%%
@@ -170,7 +170,7 @@ while test.trials > 0
         % Handling Speed
         loop.roadLeft = loop.roadLeft - loop.carVCurrent*(1/scrn.frameRate);
         loop.bikeStep = (loop.carVCurrent - cyclist.speed)/scrn.frameRate;                                  % the distance a bike will go in a frame
-        loop.oncomingCarStep = (car.oncomingSpeed + loop.carVCurrent)/scrn.frameRate;
+        loop.oncomingCarStep = (towardsCar.oncomingSpeed + loop.carVCurrent)/scrn.frameRate;
         loop.inFlowCarStep = max(loop.bikeStep);
     
         loop.carVStore = [loop.carVStore, loop.carVCurrent];
@@ -178,143 +178,11 @@ while test.trials > 0
     
         %%%%%%%%%%%%%%%%%%%%%
         %%% Drawing cyclist
-    
-        % This loop handles the logic turning a 'cyclist' stimulus on when it
-        % reaches the correct frame.
-        if cyclist.stimStartM(cyclist.stimCurrent) >= loop.roadLeft
-            cyclist.stimOn(cyclist.stimCurrent) = true;
-            if test.debug == 1
-                disp("Cyclist Stimulus Begun at Frame = " + loop.currentFrame);
-            end
-            if cyclist.stimCurrent < length(cyclist.stimStartM)
-                cyclist.stimCurrent = cyclist.stimCurrent + 1; 
-            end
-        end
-    
-        % This loop handles the movement of the 'cyclist'
-        loop.bikeYtoAppend = nan(test.nCyclists, 1);
-        for stimInt = find(cyclist.stimOn, 1, "first"):find(cyclist.stimOn, 1, "last")
-            % Draw the cyclist to the screen using the drawCyclist function
-            drawOpenGLObject([cyclist.x, cyclist.y(stimInt), 1], cyclist, "Cube");
-    
-            % update position based on relative speed and frame rate
-            cyclist.y(stimInt) = cyclist.y(stimInt) - loop.bikeStep(stimInt);
-    
-            % If the y position of the 'cyclist' is less than 0 then it must
-            % have reached the end of the track
-            if cyclist.y(stimInt) < 0
-                cyclist.stimOn(stimInt) = false;                        % Turn the stimulus off
-                loop.eventOverFlag = true;
-                if test.debug == 1
-                    disp(num2str(stimInt) + " finished track")      % Print message
-                end
-            end
-
-            if cyclist.y(stimInt) < cyclist.potentialEnd
-                if rand() < cyclist.chanceOfEnding
-                    cyclist.stimOn(stimInt) = false;
-                    loop.eventOverFlag = true;
-                    if test.debug == 1
-                        disp("In-flow Car #" + num2str(stimInt) + " turned off the track")
-                    end
-                end
-            end
-    
-            loop.bikeYtoAppend(stimInt) = cyclist.y(stimInt);
-        end
-    
-        loop.bikeYStore = [loop.bikeYStore, loop.bikeYtoAppend];
-    
-        %%%%%%%%%%%%%%%%%%%%%
-        %%% Drawing other oncoming cars
-    
-        % This loop handles the logic turning a 'car' stimulus on when it
-        % reaches the correct frame.
-        if car.stimStartM(car.stimCurrent) >= loop.roadLeft
-            car.stimOn(car.stimCurrent) = true;
-            if test.debug == 1
-                disp("Oncoming car begun at frame = " + loop.currentFrame);
-            end
-            if car.stimCurrent < length(car.stimStartM)
-                car.stimCurrent = car.stimCurrent + 1; 
-            end
-        end
-    
-        % This loop handles the movement of the 'car'
-        loop.carYToAppend = nan(test.nOncomingCars, 1);
-        for stimInt = find(car.stimOn, 1, "first"):find(car.stimOn, 1, "last")
-    
-            % Draw the cyclist to the screen using the drawCyclist function
-            drawOpenGLObject([car.x, car.y(stimInt), 1], car, "Cube");
-    
-            % update position based on relative speed and frame rate
-            car.y(stimInt) = car.y(stimInt) - loop.oncomingCarStep;
-    
-            % If the y position of the 'car' is less than 0 then it must
-            % have reached the end of the track so we can stop drawing it
-            if car.y(stimInt) < 0
-                car.stimOn(stimInt) = false;                        % Turn the stimulus off
-                if test.debug == 1
-                    disp(num2str(stimInt) + " finished track")          % Print message
-                end
-            end
-    
-            loop.carYToAppend(stimInt) = car.y(stimInt);
-        end
-    
-        loop.carYStore = [loop.carYStore, loop.carYToAppend];
-    
-        %%%%%%%%%%%%%%%%%%%%%
+        [loop, cyclist, test, loop.bikeYStore] = drawAndMoveObject(cyclist, loop, test, 1);
         %%% Drawing other in flow cars
-    
-        % This loop handles the logic turning a 'car2' stimulus on when it
-        % reaches the correct frame.
-        if test.nInFlowCars > 0
-            if car2.stimStartM(car2.stimCurrent) >= loop.roadLeft
-                car2.stimOn(car2.stimCurrent) = true;
-                if test.debug == 1
-                    disp("Oncoming car begun at frame = " + loop.currentFrame);
-                end
-                if car2.stimCurrent < length(car2.stimStartM)
-                    car2.stimCurrent = car2.stimCurrent + 1; 
-                end
-            end
-        end
-
-        % This loop handles the movement of the 'car2'
-        loop.car2YToAppend = nan(test.nInFlowCars, 1);
-        for stimInt = find(car2.stimOn, 1, "first"):find(car2.stimOn, 1, "last")
-    
-            % Draw the cyclist to the screen using the drawCyclist function
-            drawCube([car2.x, car2.y(stimInt), 1], car2);
-    
-            % update position based on relative speed and frame rate
-            car2.y(stimInt) = car2.y(stimInt) - loop.inFlowCarStep;
-    
-            % If the y position of the 'cyclist' is less than 0 then it must
-            % have reached the end of the track
-            if car2.y(stimInt) < 0
-                car2.stimOn(stimInt) = false;                        % Turn the stimulus off
-                loop.eventOverFlag = true;
-                if test.debug == 1
-                    disp(num2str(stimInt) + " finished track")          % Print message
-                end
-            end
-
-            if car2.y(stimInt) < car2.potentialEnd
-                if rand() < car2.chanceOfEnding
-                    car2.stimOn(stimInt) = false;
-                    loop.eventOverFlag = true;
-                    if test.debug == 1
-                        disp("In-flow Car #" + num2str(stimInt) + " turned off the track")
-                    end
-                end
-            end
-    
-            loop.car2YToAppend(stimInt) = car2.y(stimInt);
-        end
-
-        loop.car2YStore = [loop.car2YStore, loop.car2YToAppend];
+        [loop, withCar, test, loop.car2YStore] = drawAndMoveObject(withCar, loop, test, 2);
+        %%% Drawing other oncoming cars
+        [loop, towardsCar, test, loop.carYStore] = drawAndMoveObject(towardsCar, loop, test, 3);
     
         %%%%%%%%%%%%%%%%%%%%%
         %%% Drawing to Screen
@@ -323,7 +191,6 @@ while test.trials > 0
         Screen('EndOpenGL', scrn.win);
         Screen('Flip', scrn.win);
         
-            
         %%%%%%%%%%%%%%%%%%%%%
         %%% Handling Button Presses
         % Allows speeding up and slowing down in a discrete manner
@@ -336,7 +203,7 @@ while test.trials > 0
                 loop.setOvertake = false;
                 
                 % Change the distance that the camera can see
-                yNoise = getDiscreteViewDist(noise.levels);
+                noise.yNoise = getDiscreteViewDist(noise.levels);
                 
                 while true
                     % Displays a message to the user
@@ -345,7 +212,7 @@ while test.trials > 0
                     Screen('Flip', scrn.win)
                     
                     % Handles Button Presses
-                    loop = getKeyMakeChange(loop, keys, test, car, scrn, [0, 1, 1, 1, 0, 0]);
+                    loop = getKeyMakeChange(loop, keys, test, towardsCar, scrn, [0, 1, 1, 1, 0, 0]);
                     if loop.breakFlag == true
                         break;
                     end 
@@ -354,14 +221,14 @@ while test.trials > 0
                 % Handles when an event has not occured
                 
                 % Handles Button Presses
-                loop = getKeyMakeChange(loop, keys, test, car, scrn, [1, 0, 0, 1, 1, 1]);
+                loop = getKeyMakeChange(loop, keys, test, towardsCar, scrn, [1, 0, 0, 1, 1, 1]);
                 if loop.breakFlag == true
                     break;
                 end 
             end
         else
             % Handles Button Presses
-            loop = getKeyMakeChange(loop, keys, test, car, scrn, [1, 1, 1, 1, 1, 1]);
+            loop = getKeyMakeChange(loop, keys, test, towardsCar, scrn, [1, 1, 1, 1, 1, 1]);
             if loop.breakFlag == true
                 break;
             end 
@@ -414,5 +281,5 @@ if ~loop.skipPlot
     averageFrameRate = plotTrialSummary(loop.time{1}, loop.bikeY{1}, loop.carV{1}, noise.yNoise);
 end
 
-results.gravityCollisions = [0.15, 0.7, 0.8];           % order of R, G, B -> Car, Cyclist, Car2
-[results.bikeDist, results.carDist, results.car2Dist] = plotGravityScoring(loop, car, cyclist, car2, results.gravityCollisions);
+results.gravityCollisions = [0.15, 0.7, 0.8];           % order of R, G, B -> towardsCar, Cyclist, withCar
+[results.bikeDist, results.carDist, results.car2Dist] = plotGravityScoring(loop, towardsCar, cyclist, withCar, results.gravityCollisions);
