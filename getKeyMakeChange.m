@@ -1,4 +1,4 @@
-function loop = checkKey(loop, keys, test, car, scrn, whichKeys)
+function loop = getKeyMakeChange(loop, keys, test, car, scrn, whichKeys)
 % loop = checkKey(loop, keys, whichKeys)
 % Check keys
 %
@@ -24,6 +24,7 @@ function loop = checkKey(loop, keys, test, car, scrn, whichKeys)
 % Changelog:
 % 1.0 - Created function
 % 2.0 - Updated for the continuous vs discrete paradigms
+% 3.0 - Renamed function for clarity in use case
 
     % Checks the keys that are down
     [~, ~, keys.Code] = KbCheck;

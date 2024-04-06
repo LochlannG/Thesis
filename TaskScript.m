@@ -7,26 +7,9 @@ AssertOpenGL;
 
 %% %%%%%%%%%%%%%%%%%%%%
 %%% Pyschtoolbox setup
-
 PsychDefaultSetup(2);
 InitializeMatlabOpenGL(0, 0, 0, 0);                                                     % Initialise this with all zeros to improve performance
-
-% Pulling important details from Screen() object
-scrn = struct();
-scrn.id = max(Screen('Screens'));
-scrn.gray = GrayIndex(scrn.id);
-scrn.whit = WhiteIndex(scrn.id);
-scrn.imagingConfig = PsychImaging('PrepareConfiguration');
-[scrn.win , scrn.winRect] = PsychImaging('OpenWindow', scrn.id, scrn.gray);
-scrn.frameRate = Screen('FrameRate', scrn.id);                                          % Get frame rate of screen
-[scrn.Xpixels, scrn.Ypixels] = Screen('WindowSize', scrn.win);                          % Get x & y distances on the screen
-[scrn.xCenter, scrn.yCenter] = RectCenter(scrn.winRect);
-Screen('TextFont', scrn.win, 'Ariel');
-Screen('TextSize', scrn.win, 50);
-
-% Work arounds to convert Pyschtoolbox measurements -> OpenGL
-scrn.ar = RectHeight(scrn.winRect) / RectWidth(scrn.winRect);                           % Aspect ratio of screen
-glViewport(0, 0, RectWidth(scrn.winRect), RectHeight(scrn.winRect));                    % Gives the shape of the screen to OpenGL
+scrn = setupPsychTLBX();
 
 % Defining parameters governing the length of the test
 test = struct();
@@ -424,7 +407,10 @@ while test.trials > 0
             if loop.eventOverFlag
                 % Handles when an event has just occured
                 
-                % Change the distance of the 
+                % Move them in from their overtak
+                loop.setOvertake = false;
+                
+                % Change the distance that the camera can see
                 yNoise = getDiscreteViewDist(noise.levels);
                 
                 while true
@@ -434,7 +420,7 @@ while test.trials > 0
                     Screen('Flip', scrn.win)
                     
                     % Handles Button Presses
-                    loop = checkKey(loop, keys, test, car, scrn, [0, 1, 1, 1, 0, 0]);
+                    loop = getKeyMakeChange(loop, keys, test, car, scrn, [0, 1, 1, 1, 0, 0]);
                     if loop.breakFlag == true
                         break;
                     end 
@@ -443,14 +429,14 @@ while test.trials > 0
                 % Handles when an event has not occured
                 
                 % Handles Button Presses
-                loop = checkKey(loop, keys, test, car, scrn, [1, 0, 0, 1, 1, 1]);
+                loop = getKeyMakeChange(loop, keys, test, car, scrn, [1, 0, 0, 1, 1, 1]);
                 if loop.breakFlag == true
                     break;
                 end 
             end
         else
             % Handles Button Presses
-            loop = checkKey(loop, keys, test, car, scrn, [1, 1, 1, 1, 1, 1]);
+            loop = getKeyMakeChange(loop, keys, test, car, scrn, [1, 1, 1, 1, 1, 1]);
             if loop.breakFlag == true
                 break;
             end 
