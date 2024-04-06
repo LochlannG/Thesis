@@ -1,4 +1,4 @@
-function cube = createCubeVertexes(cube, xScale, yScale, zScale, rgb)
+function cube = getCubeVertexes(cube, xScale, yScale, zScale, rgb)
 
     
 

@@ -12,16 +12,55 @@ InitializeMatlabOpenGL(0, 0, 0, 0);                                             
 scrn = setupPsychTLBX();
 
 % Defining parameters governing the length of the test
-test = setupTest();
+test = struct();
+test.trials = 2;
+test.recordEEG = false;
 
-% Setup road & centreline
-[road, centreline] = setupRoad();
+% This determines the length of the trail and the amount of various stimuli you
+% 'expect' to see come up
+test.lengthM = 2000;                                                                    % Similar to a small journey to a shop
+test.context = 'urban';
+test = setContext(test);
+test.debug = 0;
+test.discreteSpeed = true;
+
+% Defining parameters - Road
+road = struct();
+road.centreLineWidth = 0.05;
+road.drawDist = 80;
+road.laneWidth = 2.5;
+road.totalWidth = road.laneWidth*2;                                                     % RSA local road standard
+road.vertexCoords = single([-road.laneWidth, 0, 0, ...
+                            road.laneWidth, 0, 0, ...
+                            road.laneWidth, road.drawDist, 0, ...
+                            -road.laneWidth, road.drawDist, 0]);                        % coOrds for each vertex
+road.vertexColors = single([0.29, 0.29,	0.31, ...
+                            0.29, 0.29,	0.31, ...
+                            0.29, 0.29,	0.31, ...
+                            0.29, 0.29,	0.31]);                                                    % colours at each vertex
+road.elementArray = int32([0, 1, 2, 3]);                                                % vertex numbers for the faces
 
 % Defining parameters specificly to do with the cyclist
-cyclist = setupCyclist();
+cyclist = struct();
+cyclist.curbDist = 0.5;
+cyclist.potentialEnd = 10;
+cyclist.chanceOfEnding = 0.001;
+cyclist = createCylistVertexes(cyclist, 0.25, 1.5, 1, [0.46, 0.96, 0.26]);
 
 % Defining parameters - Car
-car = setupCar(road);
+car = struct();
+car.startSpeed = 0;
+car.maxSpeed = 100/3.6;
+car.continuousAcceleration = ((100/3.6)/9);                                                       % We are assuming this car is a 2015 Golf which does 0-100 in 9 secs https://www.guideautoweb.com/en/articles/27805/volkswagen-golf-tdi-versus-golf-tsi-2015-two-tests-over-4-000-km/
+car.discreteAcceleration = (5/3.6);
+car.width = 1.8;
+car.lanePosRatio = 0.5;
+car.driverPosRatio = 0.5;
+car.overtakeWidth = 1;
+car.oncomingSpeed = car.maxSpeed;
+car.start = 100;
+car.x = 0.5*road.laneWidth;
+car = createCylistVertexes(car, 1, 1.5, 1, [1, 0, 0]);
 
 % Car 2 - inflow traffic
 car2 = car;
@@ -29,11 +68,38 @@ car2.x = -0.5*road.laneWidth;
 car2.potentialEnd = 10;
 car2.chanceOfEnding = 0.001;   % *100 for the chance of ending per frame
 
+% Centreline
+centreline = struct();
+centreline.width = 0.15;
+centreline.length = 3;
+centreline.y = 0:centreline.length*2:road.drawDist;
+centreline.vertexCoords = single([-centreline.width/2, 0, 0.01, ...
+                            centreline.width/2, 0, 0.01, ...
+                            centreline.width/2, centreline.length, 0.01, ...
+                            -centreline.width/2, centreline.length, 0.01]);                        % coOrds for each vertex
+centreline.vertexColors = single([1,  1,  1, ...
+                            1,  1,	1, ...
+                            1,  1,	1, ...
+                            1,  1,	1]);                                                    % colours at each vertex
+centreline.elementArray = int32([0, 1, 2, 3]);                                                % vertex numbers for the faces
+
 % Defining parameters - Camera
-camera = setupCamera(car, road);
+camera = struct();
+camera.FOVY = 70;
+camera.driverZ = 1.5;                                                             % between [1.05, 2]
+camera.xyz = driverPosition(camera, car, road);
+camera.fixPoint = [0, 100, 0];
+camera.upVec = [0, 0, 1];
 
 % Defining parameters - Noise
-noise = setupNoise();
+noise.limits = [0, 50];                                      % range limits for the generation of noise (caution: don't use negative values)
+noise.nWaves = 5;
+noise.noiseAmp = 20;
+noise.avK = 200;
+noise.maxSinF = 0.5;
+noise.minViewDistance = 20;
+noise.levels = [noise.minViewDistance, noise.minViewDistance*2, noise.minViewDistance*4];
+
 
 %% %%%%%%%%%%%%%%%%%%%
 %%% Setting up variables for use in the loop
@@ -41,7 +107,7 @@ noise = setupNoise();
 cyclist.x = cyclist.curbDist-road.laneWidth;
 
 % loop structure to hold data about the main loop
-loop = setupLoop();
+loop = setupLoop
 
 % Get key names
 keys = setupKeys();
@@ -415,4 +481,4 @@ if ~loop.skipPlot
 end
 
 results.gravityCollisions = [0.15, 0.7, 0.8];           % order of R, G, B -> Car, Cyclist, Car2
-[results.bikeDist, results.carDist, results.car2Dist] = plotGravityScoring(loop, car, cyclist, car2, results.gravityCollisions);
+[results.bikeDist, results.carDist, results.car2Dist] = gravityScoring(loop, car, cyclist, car2, results.gravityCollisions);
