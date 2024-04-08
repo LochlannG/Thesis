@@ -26,14 +26,15 @@ function [loop, noise] = getPostEventResponse(loop, noise, scrn, cyclist, road, 
 
     %% Tell the user that they have to adjust their speed
     waitingTime = 2;
+    ticker = waitingTime;
     
-    while waitingTime>0
+    while ticker>0
         % Displays a message to the user
-        textString = ['Event Passed\nPlease set your speed based on the new view distance in:\n' num2str(waitingTime)];
+        textString = ['Event Passed\nPlease set your speed based on the new view distance in:\n' num2str(ticker)];
         DrawFormattedText(scrn.win, textString, 'center', 'center', scrn.whit);
         Screen('Flip', scrn.win)
         pause(1)
-        waitingTime = waitingTime - 1;
+        ticker = ticker - 1;
     end
 
     %% Display the new view distance to the user
