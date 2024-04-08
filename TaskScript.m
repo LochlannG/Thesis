@@ -24,7 +24,7 @@ towardsCar = setupCar(road);
 withCar                 = towardsCar;               % Clone setupCar object
 withCar.x               = -0.5*road.laneWidth;      % Move it middle of the to the other lane
 withCar.potentialEnd    = 10;                       % The distance from the camera where the object can disappear
-withCar.chanceOfEnding  = 0.1;                    	% Chance of ending per frame
+withCar.chanceOfEnding  = 1;                    	% Chance of ending per frame
 
 % Calling remaining setup function
 camera = setupCamera(towardsCar, road);             % Defining parameters - Camera
@@ -201,6 +201,8 @@ while test.trials > 0
             if loop.eventOverFlag
                 % Handles when an event has just occured
                 
+                loop.cameraVCurrent = 15/3.6;
+
                 % Move them in if they overtook
                 loop.setOvertake = false;
                 
@@ -267,7 +269,7 @@ while test.trials > 0
         test.trials                     = test.trials - 1;          % Reduces the number of trails remaining by 1
         loop.currentTrial               = loop.currentTrial + 1;    % Updates which trial we are on
     else
-        test.trials         = 0;
+        test.trials = 0;
     end
 end
 

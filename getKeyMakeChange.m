@@ -82,8 +82,15 @@ function loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, whichK
                     minSpeed = camera.absoluteMinSpeed;
             end
 
-            if loop.cameraVCurrent <= minSpeed
-                loop.cameraVCurrent = minSpeed;
+            % This just helps round the numbers for display
+            if ~loop.eventOverFlag
+                if loop.cameraVCurrent <= minSpeed
+                    loop.cameraVCurrent = minSpeed;
+                end
+            else
+                if loop.cameraVCurrent <= 15/3.6
+                    loop.cameraVCurrent = 15/3.6;
+                end
             end
         else
             loop.cameraVCurrent = loop.cameraVCurrent - 5*camera.continuousAcceleration*(1/scrn.frameRate);
