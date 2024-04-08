@@ -26,4 +26,9 @@ function [actualGap, percievedGap] = getCurrentGap(towardsCar, noise)
         % if the car is further away than you can see, set it how far you can see
         percievedGap = noise.yNoise;
     end
+
+    if isempty(actualGap)
+        % catches where there are no more objects cases
+        actualGap = 2000;
+    end
 end

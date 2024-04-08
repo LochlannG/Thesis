@@ -15,22 +15,22 @@ scrn = setupPsychTLBX();                            % Call psychtoolbox setup fu
 %%% Defining Parameters
 
 % Call setup functions
-test                    = setupTest();              % Defining parameters governing the length of the test
-[road, centreline]      = setupRoad();              % Setup road & centreline
-cyclist                 = setupCyclist(road);       % Defining parameters specificly to do with the cyclist
+test                        = setupTest();              % Defining parameters governing the length of the test
+[road, verge, centreline]   = setupRoad();              % Setup road & centreline
+cyclist                     = setupCyclist(road);       % Defining parameters specificly to do with the cyclist
 
 % The car objects are clones of each other with slightly different variables
 towardsCar = setupCar(road);
-withCar                 = towardsCar;               % Clone setupCar object
-withCar.x               = -0.5*road.laneWidth;      % Move it middle of the to the other lane
-withCar.potentialEnd    = 10;                       % The distance from the camera where the object can disappear
-withCar.chanceOfEnding  = 1;                    	% Chance of ending per frame
+withCar                     = towardsCar;               % Clone setupCar object
+withCar.x                   = -0.5*road.laneWidth;      % Move it middle of the to the other lane
+withCar.potentialEnd        = 10;                       % The distance from the camera where the object can disappear
+withCar.chanceOfEnding      = 1;                    	% Chance of ending per frame
 
 % Calling remaining setup function
-camera = setupCamera(towardsCar, road);             % Defining parameters - Camera
-noise = setupNoise();                               % Defining parameters - Noise
-loop = setupLoop();                                 % Defining parameters - Loop
-keys = setupKeys();                                 % Defining parameters - Loop
+camera  = setupCamera(towardsCar, road);                % Defining parameters - Camera
+noise   = setupNoise();                                 % Defining parameters - Noise
+loop    = setupLoop();                                  % Defining parameters - Loop
+keys    = setupKeys();                                  % Defining parameters - Loop
 
 %% %%%%%%%%%%%%%%%%%%%
 %%% Handling pinging the EMG software
@@ -158,6 +158,9 @@ while test.trials > 0
     
         % Draw Road
         drawOpenGLObject([0, 0, 0], road, "Square")
+
+        % Draw Verges
+        drawOpenGLObject([0, 0, -0.01], verge, "Square")
 
         % Draw Centreline
         for i = 1:length(centreline.y)

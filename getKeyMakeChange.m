@@ -83,7 +83,7 @@ function loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, whichK
             end
 
             % This just helps round the numbers for display
-            if ~loop.eventOverFlag
+            if loop.eventOverTimer ~= 0
                 if loop.cameraVCurrent <= minSpeed
                     loop.cameraVCurrent = minSpeed;
                 end
