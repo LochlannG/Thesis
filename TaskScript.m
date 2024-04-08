@@ -8,8 +8,8 @@ AssertOpenGL;
 %% %%%%%%%%%%%%%%%%%%%%
 %%% Pyschtoolbox setup
 PsychDefaultSetup(2);
-InitializeMatlabOpenGL(0, 0, 0, 0);             % Initialise this with all zeros to improve performance
-scrn = setupPsychTLBX();
+InitializeMatlabOpenGL(0, 0, 0, 0);                 % Initialise this with all zeros to improve performance
+scrn = setupPsychTLBX();                            % Call psychtoolbox setup function
 
 %% %%%%%%%%%%%%%%%%%%%%
 %%% Defining Parameters
@@ -24,7 +24,7 @@ towardsCar = setupCar(road);
 withCar                 = towardsCar;               % Clone setupCar object
 withCar.x               = -0.5*road.laneWidth;      % Move it middle of the to the other lane
 withCar.potentialEnd    = 10;                       % The distance from the camera where the object can disappear
-withCar.chanceOfEnding  = 0.001;                    % Chance of ending per frame
+withCar.chanceOfEnding  = 0.1;                    	% Chance of ending per frame
 
 % Calling remaining setup function
 camera = setupCamera(towardsCar, road);             % Defining parameters - Camera
@@ -67,7 +67,9 @@ while test.trials > 0
     loop.roadLeft           = test.lengthM;
     loop.setOvertake        = false;
     loop.skipPlot           = false;
-    loop.cameraVCurrent     = 30/3.6;
+    loop.cameraVCurrent     = camera.startSpeed;
+    loop.whichTypeStore     = [];
+    loop.whichInstanceStore = [];
     loop.timeStore          = [];
     loop.bikeYStore         = [];
     loop.cameraVStore       = [];
@@ -176,7 +178,12 @@ while test.trials > 0
         [withCar, loop, test, loop.withCarYCurrent]         = drawAndMoveObject(withCar, loop, test, 2);                % Drawing other in flow cars
         [towardsCar, loop, test, loop.towardsCarYCurrent]   = drawAndMoveObject(towardsCar, loop, test, 3);             % Drawing other oncoming cars
         
+        % Getting which object is first
+        [loop.whichType, loop.whichInstance]                = getClosestObject(cyclist, withCar);
+
         % Append to storage matricies for later plotting
+        loop.whichTypeStore     = [loop.whichTypeStore, loop.whichType];
+        loop.whichInstanceStore = [loop.whichInstanceStore, loop.whichInstance];
         loop.cameraVStore       = [loop.cameraVStore, loop.cameraVCurrent];
         loop.bikeYStore         = [loop.bikeYStore, loop.bikeYCurrent];
         loop.withCarYStore      = [loop.withCarYStore, loop.withCarYCurrent];
@@ -207,7 +214,7 @@ while test.trials > 0
                     Screen('Flip', scrn.win)
                     
                     % Handles Button Presses
-                    loop = getKeyMakeChange(loop, keys, test, camera, scrn, [0, 1, 1, 1, 0, 0]);
+                    loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, [0, 1, 1, 1, 0, 0]);
                     if loop.breakFlag == true
                         break;
                     end 
@@ -216,16 +223,16 @@ while test.trials > 0
                 % Handles when an event has not occured
                 
                 % Handles Button Presses
-                loop = getKeyMakeChange(loop, keys, test, camera, scrn, [1, 0, 0, 1, 1, 1]);
+                loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, [1, 0, 0, 1, 1, 1]);
                 if loop.breakFlag == true
                     break;
                 end 
             end
         else
-            % This handles trials where the subject is in continuous            % control of their speed
+            % This handles trials where the subject is in continuous control of their speed
 
             % Handles Button Presses
-            loop = getKeyMakeChange(loop, keys, test, camera, scrn, [1, 1, 1, 1, 1, 1]);
+            loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, [1, 1, 1, 1, 1, 1]);
             if loop.breakFlag == true
                 break;
             end 
@@ -235,34 +242,30 @@ while test.trials > 0
     
         % Inform the debug user
         if test.debug == 1
-            disp("Current Frame     = " + loop.currentFrame)                                             % Useful for keeping track
+            disp("Current Frame     = " + loop.currentFrame)        % Useful for keeping track
         end    
 
         %%%%%%%%%%%%%%%%%%%%%
         %%% Handling Loop Processes
-    
-        % Update loop values
-        loop.currentFrame = loop.currentFrame + 1;
-    
-        % Update the time tracking values
-        loop.timeStore = [loop.timeStore toc];
+        loop.currentFrame = loop.currentFrame + 1;                  % Update loop values
+        loop.timeStore = [loop.timeStore toc];                      % Update the time tracking values
     
     end
 
-    % records the values stored into a cell structure
-    loop.time{loop.currentTrial}        = loop.timeStore;
-    loop.bikeY{loop.currentTrial}       = loop.bikeYStore;
-    loop.cameraV{loop.currentTrial}     = loop.cameraVStore;
-    loop.road{loop.currentTrial}        = loop.roadStore;
-    loop.towardsCarY{loop.currentTrial} = loop.towardsCarYStore;
-    loop.withCarY{loop.currentTrial}    = loop.withCarYStore;
-    loop.cameraX{loop.currentTrial}     = loop.cameraXStore;
+    % records results of the current trial stored into a cell structure
+    loop.time{loop.currentTrial}        = loop.timeStore;           % Records the frame times
+    loop.road{loop.currentTrial}        = loop.roadStore;           % Records the road left at each frame
+    loop.bikeY{loop.currentTrial}       = loop.bikeYStore;          % Records the y position of the bikes
+    loop.towardsCarY{loop.currentTrial} = loop.towardsCarYStore;    % Records the y position of the oncoming cars
+    loop.withCarY{loop.currentTrial}    = loop.withCarYStore;       % Records the y position of the cars in the lane
+    loop.cameraX{loop.currentTrial}     = loop.cameraXStore;        % Records the x position of the camera
+    loop.cameraV{loop.currentTrial}     = loop.cameraVStore;        % Records the speed of the camera
 
     % updates the loop value
     if ~loop.escapeFlag
         Screen('EndOpenGL', scrn.win);
-        test.trials         = test.trials - 1;
-        loop.currentTrial   = loop.currentTrial + 1;
+        test.trials                     = test.trials - 1;          % Reduces the number of trails remaining by 1
+        loop.currentTrial               = loop.currentTrial + 1;    % Updates which trial we are on
     else
         test.trials         = 0;
     end
@@ -270,7 +273,6 @@ end
 
 % Close open screen
 Screen('CloseAll');
-
 
 %% %%%%%%%%%%%%%%%%%%%
 %%% Plotting Summary Results

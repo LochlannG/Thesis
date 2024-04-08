@@ -18,18 +18,28 @@ function [object, loop, test, objectY] = drawAndMoveObject(object, loop, test, t
 % Author - Lochlann Gallagher
 % Changelog (I'm not very good at maintaining this):
 % 1.0 - Created function
+% 2.0 - Added functionality for objects to 'turn off the track'
+% 2.1 - Commented and cleaned up
 
-    % This loop handles the logic turning a 'object' stimulus on when it
+    % This loop handles the logic turning a 'object' on when the trial
     % reaches the correct frame.
-    if object.n > 0
-        if object.stimStartM(object.stimCurrent) >= loop.roadLeft
-            object.stimOn(object.stimCurrent) = true;
-            if test.debug == 1
-                disp("Oncoming car begun at frame = " + loop.currentFrame);
-            end
+    if object.n > 0                                                         % If there are any instances of this object
+        if object.stimStartM(object.stimCurrent) >= loop.roadLeft           % If the camera is at/has passed the point where this object should begin
+            
+            % Switch the object on
+            object.stimOn(object.stimCurrent) = true;                       
+
+            % If there are more instances yet to draw -> iterate the
+            % counter
             if object.stimCurrent < length(object.stimStartM)
                 object.stimCurrent = object.stimCurrent + 1; 
             end
+
+            % Print message if in debug mode
+            if test.debug == 1
+                disp("Oncoming car begun at frame = " + loop.currentFrame);
+            end
+
         end
     end
 
@@ -37,6 +47,9 @@ function [object, loop, test, objectY] = drawAndMoveObject(object, loop, test, t
     objectY = nan(object.n, 1);
     for stimInt = find(object.stimOn, 1, "first"):find(object.stimOn, 1, "last")
         
+            % Finds what type of object we are working on and takes out
+            % the appropriate 'step' which is the distance travelled by
+            % that object in a frame
             if type == 1
                 step = loop.bikeStep(stimInt);
             elseif type == 2
@@ -45,29 +58,41 @@ function [object, loop, test, objectY] = drawAndMoveObject(object, loop, test, t
                 step = loop.oncomingCarStep;
             end
 
-        % Draw the cyclist to the screen using the drawCyclist function
-        drawOpenGLObject([object.x, object.y(stimInt), 1], object, "Cube");
+        % Draw object and update position
+        drawOpenGLObject([object.x, object.y(stimInt), 1], object, "Cube"); % Draw the object to the screen using the drawOpenGLObject function
+        object.y(stimInt) = object.y(stimInt) - step;                       % Update position based on step
 
-        % update position based on relative speed and frame rate
-        object.y(stimInt) = object.y(stimInt) - step;
-
-        % If the y position of the 'cyclist' is less than 0 then it must
+        % If the y position of the 'cyclist' is less than 0 then it must 
         % have reached the end of the track
         if object.y(stimInt) < 0
-            object.stimOn(stimInt) = false;                        % Turn the stimulus off
+
+            object.stimOn(stimInt) = false;                                 % Turn the object off
+
+            % If it is one of the bike or car in lane then it finishing 
+            % the track is an event that we need to flag 
             if type == 1 || type == 2
-                loop.eventOverFlag = true;
+                loop.eventOverFlag = true;                                 
             end
+
+            % Print message if in debug mode
             if test.debug == 1
-                disp(num2str(stimInt) + " finished track")          % Print message
+                disp(num2str(stimInt) + " finished track")                  
             end
+
         end
         
-        if type == 1 || type == 2
-            if object.y(stimInt) < object.potentialEnd
-                if rand()*100 < object.chanceOfEnding
-                    object.stimOn(stimInt) = false;
-                    loop.eventOverFlag = true;
+        % This block handles if the object can 'disappear' (simulates
+        % bikes/cars turning off the road after you slow down behind them)
+        % This can only happen with objects tagged as type = [1, 2] as they
+        % are the ones in the camera's lane
+        if type == 1 || type == 2                                           % If one of the correct types
+            if object.y(stimInt) < object.potentialEnd                      % If the current instance is close enough to 'disappear'
+                if rand()*100 < object.chanceOfEnding                       % If the random generator has picked a number that is below the objects chance of disappearing
+                    
+                    object.stimOn(stimInt) = false;                         % Turn the instance off
+                    loop.eventOverFlag = true;                              % Flag the event as having ended
+
+                    % Print message if in debug mode
                     if test.debug == 1
                         disp("In-flow Car #" + num2str(stimInt) + " turned off the track")
                     end
@@ -75,11 +100,8 @@ function [object, loop, test, objectY] = drawAndMoveObject(object, loop, test, t
             end
         end
         
-
+        % Store the object's position for output
         objectY(stimInt) = object.y(stimInt);
     end
-
-%     % Append position to the object store
-%     objectY = [objectY, objectY];
 
 end

@@ -4,7 +4,6 @@ function car = setupCar(road)
     car = struct();                                         % Creates a new structure
 
     % Speed
-    car.startSpeed      = 0;                                % Speed the car starts at
     car.maxSpeed        = 100/3.6;                          % Maximum speed of the car
     car.oncomingSpeed   = car.maxSpeed;                     % Set the speed of an oncoming car to the max
 

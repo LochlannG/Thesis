@@ -1,9 +1,10 @@
-function loop = getKeyMakeChange(loop, keys, test, camera, scrn, whichKeys)
+function loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, whichKeys)
 % loop = checkKey(loop, keys, whichKeys)
 % Check keys and update values in the loop structure based on those inputs 
 %
 % Inputs:
 % loop              -   loop structure from TaskScript.m file, contains details of current loop
+% cyclist           -   cyclist structure from TaskScript.m file, contains values for cyclist object
 % keys              -   keys structure from TaskScript.m file, contains values for the current keyboard
 % test              -   test structure from TaskScript.m file, contains details for the current test
 % camera            -   camera structure from TaskScript.m file, contains details for the camera object
@@ -66,6 +67,24 @@ function loop = getKeyMakeChange(loop, keys, test, camera, scrn, whichKeys)
         
         if test.discreteSpeed
             loop.cameraVCurrent = loop.cameraVCurrent - camera.discreteAcceleration;
+
+            % Defining a minimum value for speed, I love getting a chance
+            % to use switch - case statements they are very fancy
+            switch loop.whichType
+                case 0 % equally far away (This one is pretty unlikely)
+                    minSpeed = min(cyclist.speed);
+                case 1 % cyclist first
+                    minSpeed = cyclist.speed(loop.whichInstance(1));
+                case 2 % withCar first
+                    minSpeed = min(cyclist.speed);
+                case 3 % neither first
+                    % I'm not sure what to do with this case so I'll just set it to a minimum
+                    minSpeed = camera.absoluteMinSpeed;
+            end
+
+            if loop.cameraVCurrent <= minSpeed
+                loop.cameraVCurrent = minSpeed;
+            end
         else
             loop.cameraVCurrent = loop.cameraVCurrent - 5*camera.continuousAcceleration*(1/scrn.frameRate);
         end
