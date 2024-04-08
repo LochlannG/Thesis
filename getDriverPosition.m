@@ -1,4 +1,4 @@
-function xyz = driverPosition(camera, car, road)
+function xyz = getDriverPosition(camera, car, road)
 
     % x position is determined by a load of ratios.
     xyz(1) = (-1) * (road.laneWidth - road.laneWidth*car.lanePosRatio + car.width*0.5*car.driverPosRatio);

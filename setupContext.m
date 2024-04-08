@@ -1,5 +1,5 @@
-function test = setContext(test)
-% test = setContext(test)
+function test = setupContext(test)
+% test = setupContext(test)
 % Randomly generate a number of points in the sample space of testLengthM
 % determined by the CyclistRate parameter
 %

@@ -1,5 +1,5 @@
-function [idx, logical] = generateStarts(testLengthM, maxStartDistance, rate)
-% [idx, logical] = generateStarts(testLengthM, startDistance, rate)
+function [idx, logical] = getStarts(testLengthM, maxStartDistance, rate)
+% [idx, logical] = getStarts(testLengthM, startDistance, rate)
 % Randomly generate a number of points in the sample space of testLengthM
 % determined by the rate parameter
 %

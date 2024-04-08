@@ -1,4 +1,4 @@
-function yposition = viewDistance(sampFreq, testLengthM, type, params)
+function yposition = getViewDistance(sampFreq, testLengthM, type, params)
 
     sampleFactorOffset = 20;
 
