@@ -199,28 +199,8 @@ while test.trials > 0
         % Allows speeding up and slowing down in a discrete manner following an event
         if test.discreteSpeed
             if loop.eventOverFlag
-                % Handles when an event has just occured
                 
-                loop.cameraVCurrent = 15/3.6;
-
-                % Move them in if they overtook
-                loop.setOvertake = false;
-                
-                % Change the distance that the camera can see
-                noise.yNoise = getDiscreteViewDist(noise.levels);
-                
-                while true
-                    % Displays a message to the user
-                    textString = ['Event passed, use the up and down keys to set the new speed' '\nSpeed: ' num2str(loop.cameraVCurrent*3.6) '\nPress return to continue'];
-                    DrawFormattedText(scrn.win, textString, 'center', 'center', scrn.whit);
-                    Screen('Flip', scrn.win)
-                    
-                    % Handles Button Presses
-                    loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, [0, 1, 1, 1, 0, 0]);
-                    if loop.breakFlag == true
-                        break;
-                    end 
-                end
+                [loop, noise] = getPostEventResponse(loop, noise, scrn, cyclist, road, centreline, keys, test, camera);
             else
                 % Handles when an event has not occured
                 
