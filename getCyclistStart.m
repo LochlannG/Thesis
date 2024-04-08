@@ -1,6 +1,6 @@
 function starts = getCyclistStart(nCyclists)
 % starts = getCyclistStart(nCyclists)
-% Randomly generate nCyclists different start positions
+% Randomly generate nCyclists discrete different start positions
 %
 % Inputs:
 % nCyclists         -   Number of starts required

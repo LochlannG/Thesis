@@ -8,7 +8,7 @@ function test = setupTest()
     % 'expect' to see come up
     test.lengthM = 2000;                                                                    % Similar to a small journey to a shop
     test.context = 'urban';
-    test = setContext(test);
+    test = setupContext(test);
     test.debug = 0;
     test.discreteSpeed = true;
 

@@ -83,8 +83,7 @@ while test.trials > 0
     %%%%%%%%%%%%%%%%%%%%%
     %%% Sets up trial loop variables for objects drawn to the screen
     % Sets up the cyclist variables for the trial loop
-    cyclist.stimStartM = generateStarts(test.lengthM, 100, test.rateCyclist*round(test.lengthM/1000));
-    cyclist.stimStartM = test.lengthM - cyclist.stimStartM;
+    cyclist.stimStartM = test.lengthM - getStarts(test.lengthM, 100, test.rateCyclist*round(test.lengthM/1000));
     cyclist.n = length(cyclist.stimStartM);
     test.nCyclists = cyclist.n;
     cyclist.speed = getCyclistSpeed(14/3.6, 3/3.6, 2, test.nCyclists);
@@ -94,7 +93,7 @@ while test.trials > 0
     cyclist.stimCurrent = 1;
 
     % Sets up the oncoming traffic variables for the trial loop
-    towardsCar.stimStartM = test.lengthM - generateStarts(test.lengthM, towardsCar.start, test.rateOncomingCar*round(test.lengthM/1000));
+    towardsCar.stimStartM = test.lengthM - getStarts(test.lengthM, towardsCar.start, test.rateOncomingCar*round(test.lengthM/1000));
     towardsCar.n = length(towardsCar.stimStartM);
     test.nOncomingCars = towardsCar.n;
     towardsCar.stimCurrent = 1;
@@ -102,7 +101,7 @@ while test.trials > 0
     towardsCar.stimOn = false(test.nOncomingCars, 1);
 
     % Sets up the in flow traffic variables for the trial loop
-    withCar.stimStartM = test.lengthM - generateStarts(test.lengthM, withCar.start, test.rateInFlowCar*round(test.lengthM/1000));
+    withCar.stimStartM = test.lengthM - getStarts(test.lengthM, withCar.start, test.rateInFlowCar*round(test.lengthM/1000));
     withCar.n = length(towardsCar.stimStartM);
     test.nInFlowCars = withCar.n;
     withCar.stimCurrent = 1;
@@ -273,8 +272,9 @@ end
 
 % Close open screen
 Screen('CloseAll');
-%%
-%%%%%%%%%%%%%%%%%%%%%
+
+
+%% %%%%%%%%%%%%%%%%%%%
 %%% Plotting Summary Results
 close all;
 if ~loop.skipPlot
