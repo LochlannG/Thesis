@@ -1,7 +1,6 @@
 function speeds = getCyclistSpeed(mu, sig, nSig, nChoices)
 % speeds = getCyclistSpeed(mu, sig, nSig, nChoices)
-% Randomly generate speeds within 2 standard deviations of a given speed
-% normal distribution
+% Randomly generate speeds within 2 standard deviations of a given speed normal distribution
 %
 % Inputs:
 % mu                -   Mean value of speed distribution

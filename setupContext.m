@@ -1,7 +1,7 @@
 function test = setupContext(test)
 % test = setupContext(test)
-% Randomly generate a number of points in the sample space of testLengthM
-% determined by the CyclistRate parameter
+% Setups up the rates of occurance for the various objects based on a 'context'
+% The 'rates' are given in units of per thousand meters
 %
 % Inputs:
 % test              -   Structure containing 'context' field which determines the setting of the current trial
@@ -13,15 +13,21 @@ function test = setupContext(test)
 % Changelog:
 % 1.0 - Created function
     
+    % Rural context
     if test.context == 'rural'
-        test.rateCyclist = 2;
-        test.rateOncomingCar = 25;
-        test.rateInFlowCar = 5;
+        test.rateCyclist        = 2  * round(test.lengthM/1000);
+        test.rateOncomingCar    = 25 * round(test.lengthM/1000);
+        test.rateInFlowCar      = 5  * round(test.lengthM/1000);
+
+    % Urban context
     elseif test.context == 'urban'
-        test.rateCyclist = 5;
-        test.rateOncomingCar = 35;
-        test.rateInFlowCar = 10;
+        test.rateCyclist        = 5  * round(test.lengthM/1000);
+        test.rateOncomingCar    = 35 * round(test.lengthM/1000);
+        test.rateInFlowCar      = 10 * round(test.lengthM/1000);
+
+    % The littliest bit of error checking
     else
         error('Unrecognised Context')
     end
+
 end

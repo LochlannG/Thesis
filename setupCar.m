@@ -1,15 +1,19 @@
 function car = setupCar(road)
-    car = struct();
-    car.startSpeed = 0;
-    car.maxSpeed = 100/3.6;
-    car.continuousAcceleration = ((100/3.6)/9);                                                       % We are assuming this car is a 2015 Golf which does 0-100 in 9 secs https://www.guideautoweb.com/en/articles/27805/volkswagen-golf-tdi-versus-golf-tsi-2015-two-tests-over-4-000-km/
-    car.discreteAcceleration = (5/3.6);
-    car.width = 1.8;
-    car.lanePosRatio = 0.5;
-    car.driverPosRatio = 0.5;
-    car.overtakeWidth = 1;
-    car.oncomingSpeed = car.maxSpeed;
-    car.start = 100;
-    car.x = 0.5*road.laneWidth;
-    car = getCubeVertexes(car, 1, 1.5, 1, [1, 0, 0]);
+
+
+    car = struct();                                         % Creates a new structure
+
+    % Speed
+    car.startSpeed      = 0;                                % Speed the car starts at
+    car.maxSpeed        = 100/3.6;                          % Maximum speed of the car
+    car.oncomingSpeed   = car.maxSpeed;                     % Set the speed of an oncoming car to the max
+
+    % Positioning                            
+    car.start           = 100;                              % How far from the camera does the car start
+    car.x               = 0.5*road.laneWidth;               % Assumes the car is driving down the middle of the lane
+
+    % Drawing
+    car.width           = 1.8;                              % Width of average irish car https://www.thejournal.ie/car-width-parking-ireland-6284300-Jan2024/
+    car                 = getCubeVertexes(car, 1, car.width, 1, [1, 0, 0]);
+
 end

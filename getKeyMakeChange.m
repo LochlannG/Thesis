@@ -1,24 +1,17 @@
-function loop = getKeyMakeChange(loop, keys, test, car, scrn, whichKeys)
+function loop = getKeyMakeChange(loop, keys, test, camera, scrn, whichKeys)
 % loop = checkKey(loop, keys, whichKeys)
-% Check keys
+% Check keys and update values in the loop structure based on those inputs 
 %
 % Inputs:
-% loop              -   loop structure from TaskScript.m file, contains
-% details of current loop
-% keys              -   keys structure from TaskScript.m file, contains
-% values for the current keyboard
-% test              -   test structure from TaskScript.m file, contains
-% details for the current test
-% car               -   car  structure from TaskScript.m file, contains
-% details for the car object
-% scrn              -   scrn structure from TaskScript.m file, contains
-% details for the current screen object
-% whichKeys         -   (1 x 6) vector containing which keys are to be
-% considered in the order of esc, return, up, down, left, right
+% loop              -   loop structure from TaskScript.m file, contains details of current loop
+% keys              -   keys structure from TaskScript.m file, contains values for the current keyboard
+% test              -   test structure from TaskScript.m file, contains details for the current test
+% camera            -   camera structure from TaskScript.m file, contains details for the camera object
+% scrn              -   scrn structure from TaskScript.m file, contains details for the current screen object
+% whichKeys         -   (1 x 6) vector containing which keys are to be considered in the order of esc, return, up, down, left, right
 % 
 % Outputs:
-% loop            -   loop structure from TaskScript.m file, contains
-% updated details of current loop
+% loop            -   loop structure from TaskScript.m file, contains updated details of current loop
 %
 % Author - Lochlann Gallagher
 % Changelog:
@@ -53,13 +46,13 @@ function loop = getKeyMakeChange(loop, keys, test, car, scrn, whichKeys)
         end
         
         if test.discreteSpeed
-            loop.carVCurrent = loop.carVCurrent + car.discreteAcceleration;
+            loop.cameraVCurrent = loop.cameraVCurrent + camera.discreteAcceleration;
         else
-            loop.carVCurrent = loop.carVCurrent + car.continuousAcceleration*(1/scrn.frameRate);
+            loop.cameraVCurrent = loop.cameraVCurrent + camera.continuousAcceleration*(1/scrn.frameRate);
         end
         
-        if loop.carVCurrent >= car.maxSpeed
-            loop.carVCurrent = car.maxSpeed;
+        if loop.cameraVCurrent >= camera.maxSpeed
+            loop.cameraVCurrent = camera.maxSpeed;
         end
 
     end
@@ -72,13 +65,13 @@ function loop = getKeyMakeChange(loop, keys, test, car, scrn, whichKeys)
         end
         
         if test.discreteSpeed
-            loop.carVCurrent = loop.carVCurrent - car.discreteAcceleration;
+            loop.cameraVCurrent = loop.cameraVCurrent - camera.discreteAcceleration;
         else
-            loop.carVCurrent = loop.carVCurrent - 5*car.continuousAcceleration*(1/scrn.frameRate);
+            loop.cameraVCurrent = loop.cameraVCurrent - 5*camera.continuousAcceleration*(1/scrn.frameRate);
         end
         
-        if loop.carVCurrent <= 0
-            loop.carVCurrent = 0;
+        if loop.cameraVCurrent <= 0
+            loop.cameraVCurrent = 0;
         end
 
     end

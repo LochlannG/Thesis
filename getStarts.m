@@ -23,8 +23,8 @@ function [idx, logical] = getStarts(testLengthM, maxStartDistance, rate)
         rate = 1;
     end
 
-    t = 0:1:testLengthM-maxStartDistance;     % Generate a vector of meter points
-    rt = poissrnd(rate);                 % randomly picks the number using a poisson
+    t = 0:1:testLengthM-maxStartDistance;       % Generate a vector of meter points
+    rt = poissrnd(rate);                        % randomly picks the number using a poisson
 
     % checks to ensure a stimulus is going to appear
     rt(rt<1) = 1;
