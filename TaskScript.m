@@ -68,8 +68,10 @@ while test.trials > 0
     loop.setOvertake        = false;
     loop.skipPlot           = false;
     loop.cameraVCurrent     = camera.startSpeed;
+    loop.eventOverTimer     = -1;
     loop.whichTypeStore     = [];
     loop.whichInstanceStore = [];
+    loop.gapStore           = [];
     loop.timeStore          = [];
     loop.bikeYStore         = [];
     loop.cameraVStore       = [];
@@ -171,19 +173,21 @@ while test.trials > 0
         loop.roadLeft           = loop.roadLeft - loop.cameraVCurrent*(1/scrn.frameRate);                               % Update the amount of "road" left with the camera's "relative" speed (it's a static image)
         loop.bikeStep           = (loop.cameraVCurrent - cyclist.speed)/scrn.frameRate;                                 % The distance a bike will move in a frame
         loop.oncomingCarStep    = (towardsCar.oncomingSpeed + loop.cameraVCurrent)/scrn.frameRate;                      % The distance a car in the other lane will move in a frame
-        loop.inFlowCarStep      = max(loop.bikeStep);                                                                   % The distance a car in the camera lane will move in a frame
+        loop.inFlowCarStep      = (loop.cameraVCurrent - min(cyclist.speed))/scrn.frameRate;                            % The distance a car in the camera lane will move in a frame
 
         % Drawing the various 'road users' to the screen
         [cyclist, loop, test, loop.bikeYCurrent]            = drawAndMoveObject(cyclist, loop, test, 1);                % Drawing cyclist
         [withCar, loop, test, loop.withCarYCurrent]         = drawAndMoveObject(withCar, loop, test, 2);                % Drawing other in flow cars
         [towardsCar, loop, test, loop.towardsCarYCurrent]   = drawAndMoveObject(towardsCar, loop, test, 3);             % Drawing other oncoming cars
-        
-        % Getting which object is first
+
+        % Getting which object is first & the actual/percieved 'gap'
         [loop.whichType, loop.whichInstance]                = getClosestObject(cyclist, withCar);
+        [loop.gap(1, 1), loop.gap(2, 1)]                    = getCurrentGap(towardsCar, noise);
 
         % Append to storage matricies for later plotting
         loop.whichTypeStore     = [loop.whichTypeStore, loop.whichType];
         loop.whichInstanceStore = [loop.whichInstanceStore, loop.whichInstance];
+        loop.gapStore           = [loop.gapStore, loop.gap];
         loop.cameraVStore       = [loop.cameraVStore, loop.cameraVCurrent];
         loop.bikeYStore         = [loop.bikeYStore, loop.bikeYCurrent];
         loop.withCarYStore      = [loop.withCarYStore, loop.withCarYCurrent];
@@ -193,14 +197,21 @@ while test.trials > 0
         % Flipping to the screen
         Screen('EndOpenGL', scrn.win);
         Screen('Flip', scrn.win);
+
+        % Start counter to wait 0.5 secs after the event ends before fixing
+        if loop.eventOverFlag
+            loop.eventOverTimer = 0.5*scrn.frameRate;
+        end
         
         %%%%%%%%%%%%%%%%%%%%%
         %%% Handling Button Presses
         % Allows speeding up and slowing down in a discrete manner following an event
         if test.discreteSpeed
-            if loop.eventOverFlag
-                
+            if loop.eventOverTimer == 0
+                % Handles when an event has occured
+
                 [loop, noise] = getPostEventResponse(loop, noise, scrn, cyclist, road, centreline, keys, test, camera);
+
             else
                 % Handles when an event has not occured
                 
@@ -210,6 +221,7 @@ while test.trials > 0
                     break;
                 end 
             end
+
         else
             % This handles trials where the subject is in continuous control of their speed
 
@@ -217,7 +229,8 @@ while test.trials > 0
             loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, [1, 1, 1, 1, 1, 1]);
             if loop.breakFlag == true
                 break;
-            end 
+            end
+
         end
         
         Screen('BeginOpenGL', scrn.win);
@@ -229,19 +242,23 @@ while test.trials > 0
 
         %%%%%%%%%%%%%%%%%%%%%
         %%% Handling Loop Processes
+        loop.eventOverTimer = loop.eventOverTimer - 1;
         loop.currentFrame = loop.currentFrame + 1;                  % Update loop values
         loop.timeStore = [loop.timeStore toc];                      % Update the time tracking values
     
     end
 
     % records results of the current trial stored into a cell structure
-    loop.time{loop.currentTrial}        = loop.timeStore;           % Records the frame times
-    loop.road{loop.currentTrial}        = loop.roadStore;           % Records the road left at each frame
-    loop.bikeY{loop.currentTrial}       = loop.bikeYStore;          % Records the y position of the bikes
-    loop.towardsCarY{loop.currentTrial} = loop.towardsCarYStore;    % Records the y position of the oncoming cars
-    loop.withCarY{loop.currentTrial}    = loop.withCarYStore;       % Records the y position of the cars in the lane
-    loop.cameraX{loop.currentTrial}     = loop.cameraXStore;        % Records the x position of the camera
-    loop.cameraV{loop.currentTrial}     = loop.cameraVStore;        % Records the speed of the camera
+    results.time{loop.currentTrial}             = loop.timeStore;           % Records the frame times
+    results.road{loop.currentTrial}             = loop.roadStore;           % Records the road left at each frame
+    results.bikeY{loop.currentTrial}            = loop.bikeYStore;          % Records the y position of the bikes
+    results.towardsCarY{loop.currentTrial}      = loop.towardsCarYStore;    % Records the y position of the oncoming cars
+    results.withCarY{loop.currentTrial}         = loop.withCarYStore;       % Records the y position of the cars in the lane
+    results.cameraX{loop.currentTrial}          = loop.cameraXStore;        % Records the x position of the camera
+    results.cameraV{loop.currentTrial}          = loop.cameraVStore;        % Records the speed of the camera
+    results.whatFirst{loop.currentTrial}        = loop.whichTypeStore;      % Records what type of object is first in your lane
+    results.whchFirst{loop.currentTrial}        = loop.whichInstanceStore;  % Records which instance of that object is first in your lane
+    results.gap{loop.currentTrial}              = loop.gapStore;            % Records the gaps in the right lane
 
     % updates the loop value
     if ~loop.escapeFlag

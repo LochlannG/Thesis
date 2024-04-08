@@ -70,7 +70,7 @@ function [object, loop, test, objectY] = drawAndMoveObject(object, loop, test, t
 
             % If it is one of the bike or car in lane then it finishing 
             % the track is an event that we need to flag 
-            if type == 1 || type == 2
+            if or(type == 1, type == 2)
                 loop.eventOverFlag = true;                                 
             end
 
@@ -85,7 +85,7 @@ function [object, loop, test, objectY] = drawAndMoveObject(object, loop, test, t
         % bikes/cars turning off the road after you slow down behind them)
         % This can only happen with objects tagged as type = [1, 2] as they
         % are the ones in the camera's lane
-        if type == 1 || type == 2                                           % If one of the correct types
+        if or(type == 1, type == 2)                                         % If one of the correct types
             if object.y(stimInt) < object.potentialEnd                      % If the current instance is close enough to 'disappear'
                 if rand()*100 < object.chanceOfEnding                       % If the random generator has picked a number that is below the objects chance of disappearing
                     
