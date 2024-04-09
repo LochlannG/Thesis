@@ -1,4 +1,4 @@
-function [loop, noise] = getPostEventResponse(loop, noise, scrn, cyclist, road, verge, centreline, keys, test, camera, which)
+function [loop, noise] = getPostEventResponse(loop, noise, scrn, cyclist, road, verge, centreline, keys, test, camera, which, emg)
 % [loop, noise] = getPostEventResponse(loop, noise, scrn, cyclist, road, centreline, keys, test, camera, which)
 % Pauses the current situation following an event, shows a subject their
 % new view distance and allows them to set a new speed
@@ -15,6 +15,7 @@ function [loop, noise] = getPostEventResponse(loop, noise, scrn, cyclist, road, 
 % test              -   Structure containing details of how the test is setup
 % camera            -   Structure holding details of the camera object
 % which             -   Which condition this function is being called in has to be either: ["first", "ongoing"]
+% emg               -   emg Object created from EMGtriggers.m class 
 %
 % Outputs:
 % loop              -   Updated structure holding details of the current trial loop
@@ -85,7 +86,7 @@ function [loop, noise] = getPostEventResponse(loop, noise, scrn, cyclist, road, 
         Screen('Flip', scrn.win)
         
         % Handles Button Presses
-        loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, [0, 1, 1, 1, 0, 0]);
+        loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, [0, 1, 1, 1, 0, 0], emg);
         pause(0.05);
         if loop.breakFlag == true
             break;

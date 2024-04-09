@@ -35,12 +35,16 @@ keys    = setupKeys();                                  % Defining parameters - 
 
 %% %%%%%%%%%%%%%%%%%%%
 %%% Handling pinging the EMG software
-% emg = EMGtriggers;
+emg = EMGtriggers(hex2dec('4FF8'));
 
 %% %%%%%%%%%%%%%%%%%%%
 %%% Main trial loop
 
 while test.trials > 0
+    
+    %%%%%%%%%%%%%%%%%%%%%
+    % Ping the software to say the trial has begun
+    emg.bigTaskMarker();
 
     %%%%%%%%%%%%%%%%%%%%%
     %%% Displays a message to the user
@@ -53,17 +57,11 @@ while test.trials > 0
         if keys.messageSkip(keys.enter) == 1
             break;
         end
-    end
+    end    
+    
 
     %%%%%%%%%%%%%%%%%%%%%
     %%% Sets/resets loop variables for the new trial
-%     if test.discreteSpeed
-%         noise.yNoise = getDiscreteViewDist(noise.levels);
-%         cyclist.potentialEnd = noise.yNoise;
-%         withCar.potentialEnd = noise.yNoise;
-%     else
-%         noise.yNoise = viewDistance(scrn.frameRate, test.lengthM, "WN", noise) + noise.minViewDistance;
-%     end
     
     % Variables that need to be reset for each new trial
     loop.currentFrame       = 1;
@@ -116,7 +114,7 @@ while test.trials > 0
 
     %%%%%%%%%%%%%%%%%%%%%
     %%% Letting the user set their speed at the start
-    [loop, noise] = getPostEventResponse(loop, noise, scrn, cyclist, road, verge, centreline, keys, test, camera, "first");
+    [loop, noise] = getPostEventResponse(loop, noise, scrn, cyclist, road, verge, centreline, keys, test, camera, "first", emg);
     cyclist.potentialEnd = noise.yNoise;
     withCar.potentialEnd = noise.yNoise;
     loop.firstDisplay = 0;
@@ -130,7 +128,7 @@ while test.trials > 0
     glEnable(GL.DEPTH_TEST);                % This ensures closer objects are drawn on top
     glShadeModel(GL.SMOOTH);
     glClearColor(0.5,0.5,0.5,1);            % Sets the background colour
-    
+
     while loop.roadLeft > 0
     
         % Timing
@@ -236,14 +234,14 @@ while test.trials > 0
             if loop.eventOverTimer == 0
                 % Handles when an event has occured
 
-                [loop, noise] = getPostEventResponse(loop, noise, scrn, cyclist, road, verge, centreline, keys, test, camera, "ongoing");
+                [loop, noise] = getPostEventResponse(loop, noise, scrn, cyclist, road, verge, centreline, keys, test, camera, "ongoing", emg);
                 cyclist.potentialEnd = noise.yNoise;                % Update Cyclist potential end zone
                 withCar.potentialEnd = noise.yNoise;                % Update the same for cars in your lane
             else
                 % Handles when an event has not occured
                 
                 % Handles Button Presses
-                loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, [1, 0, 0, 1, 1, 1]);
+                loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, [1, 0, 0, 1, 0, 1], emg);
                 if loop.breakFlag == true
                     break;
                 end 
@@ -253,7 +251,7 @@ while test.trials > 0
             % This handles trials where the subject is in continuous control of their speed
 
             % Handles Button Presses
-            loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, [1, 1, 1, 1, 1, 1]);
+            loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, [1, 1, 1, 1, 0, 1], emg);
             if loop.breakFlag == true
                 break;
             end

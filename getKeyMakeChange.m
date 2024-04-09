@@ -1,4 +1,4 @@
-function loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, whichKeys)
+function loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, whichKeys, emg)
 % loop = checkKey(loop, keys, whichKeys)
 % Check keys and update values in the loop structure based on those inputs 
 %
@@ -10,7 +10,8 @@ function loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, whichK
 % camera            -   camera structure from TaskScript.m file, contains details for the camera object
 % scrn              -   scrn structure from TaskScript.m file, contains details for the current screen object
 % whichKeys         -   (1 x 6) vector containing which keys are to be considered in the order of esc, return, up, down, left, right
-% 
+% emg               -   emg Object created from EMGtriggers.m class 
+%
 % Outputs:
 % loop            -   loop structure from TaskScript.m file, contains updated details of current loop
 %
@@ -26,9 +27,6 @@ function loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, whichK
     % Will close the loop if returned true, defaults to false
     loop.breakFlag = false;
     loop.hitMinSpeedFlag = true;
-    
-    % Local variables used in function
-    somethingVisible = any(loop.whichInstance ~= 0);
     
     % Escape Key
     if all(keys.Code(keys.escape)) && whichKeys(1) == 1
@@ -59,7 +57,6 @@ function loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, whichK
         if loop.cameraVCurrent >= camera.maxSpeed
             loop.cameraVCurrent = camera.maxSpeed;
         end
-
     end
     
     % Down arrow key
@@ -72,6 +69,7 @@ function loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, whichK
         
         if loop.nFramesSlowing == 0
             loop.nFramesSlowing = 1;
+            emg.onMarker();
         end
         
         if test.discreteSpeed
@@ -120,6 +118,8 @@ function loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, whichK
         
         % If the down button hasn't been pressed this frame
         loop.nFramesSlowing = 0;
+        emg.offMarker();
+        
     end
     
     % Left arrow key
@@ -139,6 +139,9 @@ function loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, whichK
             disp("Overtake")
         end
         loop.setOvertake = true;
+        
+        % ping EMG
+        emg.smlTaskMarker();
 
     end
     
