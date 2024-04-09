@@ -109,6 +109,10 @@ while test.trials > 0
     withCar.stimOn          = false(test.nInFlowCars, 1);
 
     %%%%%%%%%%%%%%%%%%%%%
+    %%% Letting the user set their speed at the start
+    [loop, noise] = getPostEventResponse(loop, noise, scrn, cyclist, road, verge, centreline, keys, test, camera, "first");
+
+    %%%%%%%%%%%%%%%%%%%%%
     %%% OpenGL setup
     
     Screen('BeginOpenGL', scrn.win);        % This is required at the start of every OpenGL frame
@@ -213,7 +217,7 @@ while test.trials > 0
             if loop.eventOverTimer == 0
                 % Handles when an event has occured
 
-                [loop, noise] = getPostEventResponse(loop, noise, scrn, cyclist, road, centreline, keys, test, camera);
+                [loop, noise] = getPostEventResponse(loop, noise, scrn, cyclist, road, verge, centreline, keys, test, camera, "ongoing");
 
             else
                 % Handles when an event has not occured

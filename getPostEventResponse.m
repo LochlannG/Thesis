@@ -1,5 +1,5 @@
-function [loop, noise] = getPostEventResponse(loop, noise, scrn, cyclist, road, centreline, keys, test, camera)
-% [loop, noise] = getPostEventResponse(loop, noise, scrn, cyclist, road, centreline, keys, test, camera)
+function [loop, noise] = getPostEventResponse(loop, noise, scrn, cyclist, road, verge, centreline, keys, test, camera, which)
+% [loop, noise] = getPostEventResponse(loop, noise, scrn, cyclist, road, centreline, keys, test, camera, which)
 % Pauses the current situation following an event, shows a subject their
 % new view distance and allows them to set a new speed
 %
@@ -9,10 +9,12 @@ function [loop, noise] = getPostEventResponse(loop, noise, scrn, cyclist, road, 
 % scrn              -   Structure holding details of the scrn object
 % cyclist           -   Structure holding details of the road object
 % road              -   Structure holding details of the road object
+% verge             -   Structure holding details of the verge object
 % centreline        -   Structure holding details of the centreline object
 % keys              -   Structure holding details of the keys object
 % test              -   Structure containing details of how the test is setup
 % camera            -   Structure holding details of the camera object
+% which             -   Which condition this function is being called in has to be either: ["first", "ongoing"]
 %
 % Outputs:
 % loop              -   Updated structure holding details of the current trial loop
@@ -30,7 +32,11 @@ function [loop, noise] = getPostEventResponse(loop, noise, scrn, cyclist, road, 
     
     while ticker>0
         % Displays a message to the user
-        textString = ['Event Passed\nPlease set your speed based on the new view distance in:\n' num2str(ticker)];
+        if which == "first"
+            textString = ['Trial Beginning\nPlease set your speed based on the new view distance in:\n' num2str(ticker)];
+        elseif which == "ongoing"
+            textString = ['Event Passed\nPlease set your speed based on the new view distance in:\n' num2str(ticker)];
+        end
         DrawFormattedText(scrn.win, textString, 'center', 'center', scrn.whit);
         Screen('Flip', scrn.win)
         pause(1)
@@ -54,8 +60,9 @@ function [loop, noise] = getPostEventResponse(loop, noise, scrn, cyclist, road, 
     gluLookAt(camera.xyz(1), camera.xyz(2), camera.xyz(3), camera.fixPoint(1), camera.fixPoint(2), camera.fixPoint(3), camera.upVec(1), camera.upVec(2), camera.upVec(3));
     glClear();                              % Clear out the backbuffer
 
-    % Draw Road & Centrelines
+    % Draw Road, Verges & Centrelines
     drawOpenGLObject([0, 0, 0], road, "Square")
+    drawOpenGLObject([0, 0, -0.01], verge, "Square")
     for i = 1:length(centreline.y)
         drawOpenGLObject([0, centreline.y(i), 0], centreline, "Square")
     end
