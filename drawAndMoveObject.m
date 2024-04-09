@@ -66,19 +66,20 @@ function [object, loop, test, objectY] = drawAndMoveObject(object, loop, test, t
         % have reached the end of the track
         if object.y(stimInt) < 0
 
-            object.stimOn(stimInt) = false;                                 % Turn the object off
-
             % If it is one of the bike or car in lane then it finishing 
             % the track is an event that we need to flag 
             if or(type == 1, type == 2)
                 loop.eventOverFlag = true;                                 
             end
 
+        if object.y(stimInt) < -2
+
+            object.stimOn(stimInt) = false;                                 % Turn the object off
+
             % Print message if in debug mode
             if test.debug == 1
                 disp(num2str(stimInt) + " finished track")                  
             end
-
         end
         
         % This block handles if the object can 'disappear' (simulates

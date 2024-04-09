@@ -160,18 +160,17 @@ while test.trials > 0
         % Clear out the backbuffer
         glClear();
     
-        % Draw Road
-        drawOpenGLObject([0, 0, 0], road, "Square")
-
-        % Draw Verges
-        drawOpenGLObject([0, 0, -0.01], verge, "Square")
+        % Draw Road, Verges
+        drawOpenGLObject([0, 0, 0], road, "Square")         % Draw Road
+        drawOpenGLObject([0, 0, -0.01], verge, "Square")    % Draw Verges
 
         % Draw Centreline
-        for i = 1:length(centreline.y)
+        for i = 1:length(centreline.y)                      
             drawOpenGLObject([0, centreline.y(i), 0], centreline, "Square")
         end
+        % Move Centrelines
         centreline.y = centreline.y - loop.cameraVCurrent/scrn.frameRate;
-        if centreline.y(1) <= -3
+        if centreline.y(1) <= -3                            % Remove them if they are far enough away
             centreline.y(1) = [];
             centreline.y    = [centreline.y centreline.y(end)+6];
         end
