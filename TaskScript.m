@@ -198,7 +198,7 @@ while test.trials > 0
         [towardsCar, loop, test, loop.towardsCarYCurrent]   = drawAndMoveObject(towardsCar, loop, test, 3);             % Drawing other oncoming cars
 
         % Getting which object is first & the actual/percieved 'gap'
-        [loop.whichType, loop.whichInstance]                = getClosestObject(cyclist, withCar);
+        [loop.whichType, loop.whichInstance, loop.oneVis]   = getClosestObject(cyclist, withCar);
         
         % If the object in front has changed since the last time
         try

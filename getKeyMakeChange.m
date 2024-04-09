@@ -27,6 +27,9 @@ function loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, whichK
     loop.breakFlag = false;
     loop.hitMinSpeedFlag = true;
     
+    % Local variables used in function
+    somethingVisible = any(loop.whichInstance ~= 0);
+    
     % Escape Key
     if all(keys.Code(keys.escape)) && whichKeys(1) == 1
         % Handles the escape key
@@ -60,7 +63,8 @@ function loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, whichK
     end
     
     % Down arrow key
-    if all(keys.Code(keys.dw)) && whichKeys(4) == 1 % this is where you handle that
+    % If key enabled AND pressed
+    if all(keys.Code(keys.dw)) && whichKeys(4) == 1
         % Handles slowing down
         if test.debug == 1
             disp("Slow Down")
@@ -94,7 +98,7 @@ function loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, whichK
                 if loop.cameraVCurrent <= 15/3.6
                     loop.cameraVCurrent = 15/3.6;
                 end
-            else
+            elseif loop.oneVis      % if something isn't visible you can't slow down
                 % When the trial screen is in place
                 loop.cameraVCurrent = loop.cameraVCurrent - (loop.nFramesSlowing)*camera.slopeOfAccFun*(1/scrn.frameRate);
                 loop.nFramesSlowing = loop.nFramesSlowing + 1;

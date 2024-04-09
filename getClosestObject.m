@@ -1,6 +1,7 @@
-function [whichType, whichInstance] = getClosestObject(cyclist, withCar)
+function [whichType, whichInstance, somethingVisible] = getClosestObject(cyclist, withCar)
     
-    typeOptions             = [0, 1, 2, 3];        % equal, cyclist, withCar, neither
+    typeOptions             = [0, 1, 2, 3];         % equal, cyclist, withCar, neither
+    somethingVisible        = false;                % assume nothing is visible
 
     closestCyclist          = min(cyclist.y(cyclist.stimOn));
     closestCar              = min(withCar.y(withCar.stimOn));
@@ -25,8 +26,10 @@ function [whichType, whichInstance] = getClosestObject(cyclist, withCar)
         % Where they are equally far from the camera
 
         whichType           = typeOptions(1);
-        whichInstance(1)    = cyclist.y(cyclist.y==closestCyclist);
-        whichInstance(2)    = withCar.y(withCar.y==closestCar);
+        whichInstance(1)    = find(cyclist.stimOn, 1);
+        whichInstance(2)    = find(withCar.stimOn, 1);
+        
+        somethingVisible    = cyclist.y(whichInstance(1)) < cyclist.potentialEnd;
 
     elseif cyclistCloser
         % Where the cyclist is closer to the camera
@@ -34,13 +37,17 @@ function [whichType, whichInstance] = getClosestObject(cyclist, withCar)
         whichType           = typeOptions(2);
         whichInstance(1)    = find(cyclist.stimOn, 1);
         whichInstance(2)    = 0;
-
+        
+        somethingVisible    = cyclist.y(whichInstance(1)) < cyclist.potentialEnd;
+        
     elseif carCloser
         % Where the car is closer to the camera
 
         whichType           = typeOptions(3);
         whichInstance(1)    = 0;
         whichInstance(2)    = find(withCar.stimOn, 1);
+        
+        somethingVisible    = withCar.y(whichInstance(2)) < withCar.potentialEnd;
 
     else
 
