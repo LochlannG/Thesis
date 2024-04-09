@@ -1,5 +1,5 @@
-function starts = getCyclistStart(nCyclists)
-% starts = getCyclistStart(nCyclists)
+function starts = getCyclistStartPos(nCyclists)
+% starts = getCyclistStartPos(nCyclists)
 % Randomly generate nCyclists discrete different start positions
 %
 % Inputs:

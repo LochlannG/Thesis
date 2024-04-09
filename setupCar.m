@@ -10,7 +10,8 @@ function car = setupCar(road)
     % Positioning                            
     car.start           = 100;                              % How far from the camera does the car start
     car.x               = 0.5*road.laneWidth;               % Assumes the car is driving down the middle of the lane
-
+    car.spacing         = 10;                               % Minimum Distance between cars
+    
     % Drawing
     car.width           = 1.8;                              % Width of average irish car https://www.thejournal.ie/car-width-parking-ireland-6284300-Jan2024/
     car                 = getCubeVertexes(car, 1, car.width, 1, [1, 0, 0]);

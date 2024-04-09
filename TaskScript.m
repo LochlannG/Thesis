@@ -25,6 +25,7 @@ withCar                     = towardsCar;               % Clone setupCar object
 withCar.x                   = -0.5*road.laneWidth;      % Move it middle of the to the other lane
 withCar.potentialEnd        = 10;                       % The distance from the camera where the object can disappear
 withCar.chanceOfEnding      = 1;                    	% Chance of ending per frame
+withCar.spacing             = 50;                       % Minimum Distance between objects
 
 % Calling remaining setup function
 camera  = setupCamera(towardsCar, road);                % Defining parameters - Camera
@@ -69,6 +70,7 @@ while test.trials > 0
     loop.skipPlot           = false;
     loop.cameraVCurrent     = camera.startSpeed;
     loop.eventOverTimer     = -1;
+    loop.firstDisplay       = 1;
     loop.whichTypeStore     = [];
     loop.whichInstanceStore = [];
     loop.gapStore           = [];
@@ -83,17 +85,17 @@ while test.trials > 0
     %%%%%%%%%%%%%%%%%%%%%
     %%% Sets up trial loop variables for objects drawn to the screen
     % Sets up the cyclist variables for the trial loop
-    cyclist.stimStartM      = test.lengthM - getStarts(test.lengthM, 100, test.rateCyclist);
+    cyclist.stimStartM      = test.lengthM - getStarts(test.lengthM, 100, cyclist.spacing, test.rateCyclist);
     cyclist.n               = length(cyclist.stimStartM);
     test.nCyclists          = cyclist.n;
     cyclist.speed           = getCyclistSpeed(14/3.6, 3/3.6, 2, test.nCyclists);
-    cyclist.start           = getCyclistStart(test.nCyclists);
+    cyclist.start           = getCyclistStartPos(test.nCyclists);
     cyclist.y               = ones(test.nCyclists, 1).*cyclist.start';
     cyclist.stimOn          = false(test.nCyclists, 1);
     cyclist.stimCurrent     = 1;
 
     % Sets up the oncoming traffic variables for the trial loop
-    towardsCar.stimStartM   = test.lengthM - getStarts(test.lengthM, towardsCar.start, test.rateOncomingCar);
+    towardsCar.stimStartM   = test.lengthM - getStarts(test.lengthM, towardsCar.start, towardsCar.spacing, test.rateOncomingCar);
     towardsCar.n            = length(towardsCar.stimStartM);
     test.nOncomingCars      = towardsCar.n;
     towardsCar.stimCurrent  = 1;
@@ -101,9 +103,10 @@ while test.trials > 0
     towardsCar.stimOn       = false(test.nOncomingCars, 1);
 
     % Sets up the in flow traffic variables for the trial loop
-    withCar.stimStartM      = test.lengthM - getStarts(test.lengthM, withCar.start, test.rateInFlowCar);
+    withCar.stimStartM      = test.lengthM - getStarts(test.lengthM, withCar.start, withCar.spacing, test.rateInFlowCar);
     withCar.n               = length(towardsCar.stimStartM);
     test.nInFlowCars        = withCar.n;
+    withCar.speed           = min(cyclist.speed);
     withCar.stimCurrent     = 1;
     withCar.y               = ones(test.nInFlowCars, 1)*towardsCar.start;
     withCar.stimOn          = false(test.nInFlowCars, 1);
@@ -111,7 +114,8 @@ while test.trials > 0
     %%%%%%%%%%%%%%%%%%%%%
     %%% Letting the user set their speed at the start
     [loop, noise] = getPostEventResponse(loop, noise, scrn, cyclist, road, verge, centreline, keys, test, camera, "first");
-
+    loop.firstDisplay = 0;
+    
     %%%%%%%%%%%%%%%%%%%%%
     %%% OpenGL setup
     
@@ -179,7 +183,7 @@ while test.trials > 0
         loop.roadLeft           = loop.roadLeft - loop.cameraVCurrent*(1/scrn.frameRate);                               % Update the amount of "road" left with the camera's "relative" speed (it's a static image)
         loop.bikeStep           = (loop.cameraVCurrent - cyclist.speed)/scrn.frameRate;                                 % The distance a bike will move in a frame
         loop.oncomingCarStep    = (towardsCar.oncomingSpeed + loop.cameraVCurrent)/scrn.frameRate;                      % The distance a car in the other lane will move in a frame
-        loop.inFlowCarStep      = (loop.cameraVCurrent - min(cyclist.speed))/scrn.frameRate;                            % The distance a car in the camera lane will move in a frame
+        loop.inFlowCarStep      = (loop.cameraVCurrent - withCar.speed)/scrn.frameRate;                            % The distance a car in the camera lane will move in a frame
 
         % Drawing the various 'road users' to the screen
         [cyclist, loop, test, loop.bikeYCurrent]            = drawAndMoveObject(cyclist, loop, test, 1);                % Drawing cyclist
