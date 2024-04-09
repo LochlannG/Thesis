@@ -25,6 +25,7 @@ function loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, whichK
     
     % Will close the loop if returned true, defaults to false
     loop.breakFlag = false;
+    loop.hitMinSpeedFlag = true;
     
     % Escape Key
     if all(keys.Code(keys.escape)) && whichKeys(1) == 1
@@ -59,10 +60,14 @@ function loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, whichK
     end
     
     % Down arrow key
-    if all(keys.Code(keys.dw)) && whichKeys(4) == 1
+    if all(keys.Code(keys.dw)) && whichKeys(4) == 1 % this is where you handle that
         % Handles slowing down
         if test.debug == 1
             disp("Slow Down")
+        end
+        
+        if loop.nFramesSlowing == 0
+            loop.nFramesSlowing = 1;
         end
         
         if test.discreteSpeed
@@ -71,7 +76,7 @@ function loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, whichK
             % to use switch - case statements they are very fancy
             if any(strcmp(fieldnames(loop), 'whichType'))
                 switch loop.whichType
-                    case 1 % equally far away (This one is pretty unlikely)
+                    case 1
                          minSpeed = cyclist.speed(loop.whichInstance(1));
                     otherwise
                         minSpeed = min(cyclist.speed);
@@ -91,8 +96,10 @@ function loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, whichK
                 end
             else
                 % When the trial screen is in place
-                loop.cameraVCurrent = loop.cameraVCurrent - camera.continuousAcceleration*(1/scrn.frameRate);
+                loop.cameraVCurrent = loop.cameraVCurrent - (loop.nFramesSlowing)*camera.slopeOfAccFun*(1/scrn.frameRate);
+                loop.nFramesSlowing = loop.nFramesSlowing + 1;
                 if loop.cameraVCurrent <= minSpeed
+                    loop.hitMinSpeedFlag = true;
                     loop.cameraVCurrent = minSpeed;
                 end
 
@@ -105,6 +112,10 @@ function loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, whichK
             loop.cameraVCurrent = 0;
         end
 
+    else
+        
+        % If the down button hasn't been pressed this frame
+        loop.nFramesSlowing = 0;
     end
     
     % Left arrow key

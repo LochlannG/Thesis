@@ -22,7 +22,7 @@ function [accepted, logical] = getStarts(testLengthM, maxStartDistance, closestD
 % 4.0 - Added a way to ensure a minimum distance between points
 
     % Debug mode
-    debug = 1;
+    debug = 0;
 
     % Checking inputs
     if rate == 0

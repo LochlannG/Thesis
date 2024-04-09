@@ -74,7 +74,8 @@ function [loop, noise] = getPostEventResponse(loop, noise, scrn, cyclist, road, 
     %% Get user feedback about their new speed
     loop.cameraVCurrent = 50/3.6;   % Bring them to 50 km/h so they don't have to go up and down the spectrum
     loop.setOvertake = false;       % Move them in if they overtook in the last frame
-
+    loop.hitMinSpeedFlag = false;   % Reset the flag that says they have hit the minimum flag
+    
     % Loop which keeps a frame up that tells users about their 
     while true
 
@@ -85,6 +86,7 @@ function [loop, noise] = getPostEventResponse(loop, noise, scrn, cyclist, road, 
         
         % Handles Button Presses
         loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, [0, 1, 1, 1, 0, 0]);
+        pause(0.05);
         if loop.breakFlag == true
             break;
         end

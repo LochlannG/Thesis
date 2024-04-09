@@ -7,7 +7,8 @@ function [object, loop, test, objectY] = drawAndMoveObject(object, loop, test, t
 % object            -   Structure holding details of the object to be drawn and moved
 % loop              -   Structure holding details of the current trial loop
 % test              -   Structure containing details of how the test is setup
-% type              -   What is the object can take value [1, 2, 3]
+% type              -   What is the object can take value [1, 2, 3] <-> [bike, withCar, towardsCar]
+% isFirst           -   Logical value, is the current object first
 %
 % Outputs:
 % object            -   Updated tructure holding details of the object to be drawn and moved
@@ -50,11 +51,11 @@ function [object, loop, test, objectY] = drawAndMoveObject(object, loop, test, t
             % Finds what type of object we are working on and takes out
             % the appropriate 'step' which is the distance travelled by
             % that object in a frame
-            if type == 1
+            if type == 1        % bike
                 step = loop.bikeStep(stimInt);
-            elseif type == 2
+            elseif type == 2    % with car
                 step = loop.inFlowCarStep;
-            elseif type == 3
+            elseif type == 3    % towards car
                 step = loop.oncomingCarStep;
             end
 
@@ -72,6 +73,7 @@ function [object, loop, test, objectY] = drawAndMoveObject(object, loop, test, t
                 loop.eventOverFlag = true;                                 
             end
         end
+        
         if object.y(stimInt) < -2
 
             object.stimOn(stimInt) = false;                                 % Turn the object off
@@ -86,17 +88,25 @@ function [object, loop, test, objectY] = drawAndMoveObject(object, loop, test, t
         % bikes/cars turning off the road after you slow down behind them)
         % This can only happen with objects tagged as type = [1, 2] as they
         % are the ones in the camera's lane
-        if or(type == 1, type == 2)                                         % If one of the correct types
-            if object.y(stimInt) < object.potentialEnd                      % If the current instance is close enough to 'disappear'
-                if rand()*100 < object.chanceOfEnding                       % If the random generator has picked a number that is below the objects chance of disappearing
+        if or(type == 1, type == 2)                                             % If one of the correct types
+            if and(loop.whichType == type, loop.whichInstance(type) == stimInt) % If this instance of this object is in front
+                if object.y(stimInt) < object.potentialEnd                      % If the current instance is close enough to 'disappear'
+                    loop.nFramShown = loop.nFramShown + 1;
                     
-                    object.stimOn(stimInt) = false;                         % Turn the instance off
-                    loop.eventOverFlag = true;                              % Flag the event as having ended
+                    % If the random generator has picked a number that is 
+                    % below the objects chance of disappearing or the
+                    % object has been in front for more than nFramesTurn
+                    % figure
+                    if or(rand()*100<object.chanceOfEnding, and(loop.nFramShown>200, loop.hitMinSpeedFlag))
+                        loop.nFramShown = 0;
+                        object.stimOn(stimInt) = false;                         % Turn the instance off
+                        loop.eventOverFlag = true;                              % Flag the event as having ended
 
-                    % Print message if in debug mode
-                    if test.debug == 1
-                        disp("In-flow Car #" + num2str(stimInt) + " turned off the track")
-                    end
+                        % Print message if in debug mode
+                        if test.debug == 1
+                            disp("In-flow Car #" + num2str(stimInt) + " turned off the track")
+                        end
+                    end                    
                 end
             end
         end
