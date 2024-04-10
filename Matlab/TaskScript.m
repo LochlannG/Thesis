@@ -23,23 +23,28 @@ cyclist                     = setupCyclist(road);       % Defining parameters sp
 towardsCar = setupCar(road);
 withCar                     = towardsCar;               % Clone setupCar object
 withCar.x                   = -0.5*road.laneWidth;      % Move it middle of the to the other lane
-withCar.potentialEnd        = 10;                       % The distance from the camera where the object can disappear
-withCar.chanceOfEnding      = 1;                    	% Chance of ending per frame
+withCar.potentialEnd        = 20;                       % The distance from the camera where the object can disappear
+withCar.chanceOfEnding      = 0.01;                    	% Chance of ending per frame
+withCar.spacing             = 50;                       % Minimum Distance between objects
 
 % Calling remaining setup function
 camera  = setupCamera(towardsCar, road);                % Defining parameters - Camera
 noise   = setupNoise();                                 % Defining parameters - Noise
-loop    = setupLoop();                                  % Defining parameters - Loop
+loop    = setupLoop(scrn);                              % Defining parameters - Loop
 keys    = setupKeys();                                  % Defining parameters - Loop
 
 %% %%%%%%%%%%%%%%%%%%%
 %%% Handling pinging the EMG software
-% emg = EMGtriggers;
+emg = EMGtriggers(hex2dec('4FF8'));
 
 %% %%%%%%%%%%%%%%%%%%%
 %%% Main trial loop
 
 while test.trials > 0
+    
+    %%%%%%%%%%%%%%%%%%%%%
+    % Ping the software to say the trial has begun
+    emg.bigTaskMarker();
 
     %%%%%%%%%%%%%%%%%%%%%
     %%% Displays a message to the user
@@ -52,15 +57,11 @@ while test.trials > 0
         if keys.messageSkip(keys.enter) == 1
             break;
         end
-    end
+    end    
+    
 
     %%%%%%%%%%%%%%%%%%%%%
     %%% Sets/resets loop variables for the new trial
-    if test.discreteSpeed
-        noise.yNoise = getDiscreteViewDist(noise.levels);
-    else
-        noise.yNoise = viewDistance(scrn.frameRate, test.lengthM, "WN", noise) + noise.minViewDistance;
-    end
     
     % Variables that need to be reset for each new trial
     loop.currentFrame       = 1;
@@ -69,8 +70,10 @@ while test.trials > 0
     loop.skipPlot           = false;
     loop.cameraVCurrent     = camera.startSpeed;
     loop.eventOverTimer     = -1;
-    loop.whichTypeStore     = [];
-    loop.whichInstanceStore = [];
+    loop.firstDisplay       = 1;
+    loop.nFramShown         = 0;
+    loop.whichTypeStore     = []; loop.whichType = 0;
+    loop.whichInstanceStore = []; loop.whichInstance = 0;
     loop.gapStore           = [];
     loop.timeStore          = [];
     loop.bikeYStore         = [];
@@ -83,17 +86,17 @@ while test.trials > 0
     %%%%%%%%%%%%%%%%%%%%%
     %%% Sets up trial loop variables for objects drawn to the screen
     % Sets up the cyclist variables for the trial loop
-    cyclist.stimStartM      = test.lengthM - getStarts(test.lengthM, 100, test.rateCyclist);
+    cyclist.stimStartM      = test.lengthM - getStarts(test.lengthM, 100, cyclist.spacing, test.rateCyclist);
     cyclist.n               = length(cyclist.stimStartM);
     test.nCyclists          = cyclist.n;
     cyclist.speed           = getCyclistSpeed(14/3.6, 3/3.6, 2, test.nCyclists);
-    cyclist.start           = getCyclistStart(test.nCyclists);
+    cyclist.start           = getCyclistStartPos(test.nCyclists);
     cyclist.y               = ones(test.nCyclists, 1).*cyclist.start';
     cyclist.stimOn          = false(test.nCyclists, 1);
     cyclist.stimCurrent     = 1;
 
     % Sets up the oncoming traffic variables for the trial loop
-    towardsCar.stimStartM   = test.lengthM - getStarts(test.lengthM, towardsCar.start, test.rateOncomingCar);
+    towardsCar.stimStartM   = test.lengthM - getStarts(test.lengthM, towardsCar.start, towardsCar.spacing, test.rateOncomingCar);
     towardsCar.n            = length(towardsCar.stimStartM);
     test.nOncomingCars      = towardsCar.n;
     towardsCar.stimCurrent  = 1;
@@ -101,17 +104,21 @@ while test.trials > 0
     towardsCar.stimOn       = false(test.nOncomingCars, 1);
 
     % Sets up the in flow traffic variables for the trial loop
-    withCar.stimStartM      = test.lengthM - getStarts(test.lengthM, withCar.start, test.rateInFlowCar);
+    withCar.stimStartM      = test.lengthM - getStarts(test.lengthM, withCar.start, withCar.spacing, test.rateInFlowCar);
     withCar.n               = length(towardsCar.stimStartM);
     test.nInFlowCars        = withCar.n;
+    withCar.speed           = min(cyclist.speed);
     withCar.stimCurrent     = 1;
     withCar.y               = ones(test.nInFlowCars, 1)*towardsCar.start;
     withCar.stimOn          = false(test.nInFlowCars, 1);
 
     %%%%%%%%%%%%%%%%%%%%%
     %%% Letting the user set their speed at the start
-    [loop, noise] = getPostEventResponse(loop, noise, scrn, cyclist, road, verge, centreline, keys, test, camera, "first");
-
+    [loop, noise] = getPostEventResponse(loop, noise, scrn, cyclist, road, verge, centreline, keys, test, camera, "first", emg);
+    cyclist.potentialEnd = noise.yNoise;
+    withCar.potentialEnd = noise.yNoise;
+    loop.firstDisplay = 0;
+    
     %%%%%%%%%%%%%%%%%%%%%
     %%% OpenGL setup
     
@@ -121,7 +128,7 @@ while test.trials > 0
     glEnable(GL.DEPTH_TEST);                % This ensures closer objects are drawn on top
     glShadeModel(GL.SMOOTH);
     glClearColor(0.5,0.5,0.5,1);            % Sets the background colour
-    
+
     while loop.roadLeft > 0
     
         % Timing
@@ -179,15 +186,26 @@ while test.trials > 0
         loop.roadLeft           = loop.roadLeft - loop.cameraVCurrent*(1/scrn.frameRate);                               % Update the amount of "road" left with the camera's "relative" speed (it's a static image)
         loop.bikeStep           = (loop.cameraVCurrent - cyclist.speed)/scrn.frameRate;                                 % The distance a bike will move in a frame
         loop.oncomingCarStep    = (towardsCar.oncomingSpeed + loop.cameraVCurrent)/scrn.frameRate;                      % The distance a car in the other lane will move in a frame
-        loop.inFlowCarStep      = (loop.cameraVCurrent - min(cyclist.speed))/scrn.frameRate;                            % The distance a car in the camera lane will move in a frame
+        loop.inFlowCarStep      = (loop.cameraVCurrent - withCar.speed)/scrn.frameRate;                            % The distance a car in the camera lane will move in a frame
 
+        %%%%%%%%%%%%%%%%%%%%%
+        %%% Drawingiong objects
         % Drawing the various 'road users' to the screen
         [cyclist, loop, test, loop.bikeYCurrent]            = drawAndMoveObject(cyclist, loop, test, 1);                % Drawing cyclist
         [withCar, loop, test, loop.withCarYCurrent]         = drawAndMoveObject(withCar, loop, test, 2);                % Drawing other in flow cars
         [towardsCar, loop, test, loop.towardsCarYCurrent]   = drawAndMoveObject(towardsCar, loop, test, 3);             % Drawing other oncoming cars
 
         % Getting which object is first & the actual/percieved 'gap'
-        [loop.whichType, loop.whichInstance]                = getClosestObject(cyclist, withCar);
+        [loop.whichType, loop.whichInstance, loop.oneVis]   = getClosestObject(cyclist, withCar);
+        
+        % If the object in front has changed since the last time
+        try
+            if or(loop.whichType ~= loop.whichTypeStore(end-1), loop.whichInstance ~= loop.whichInstanceStore(end-1))
+                loop.nFramShown = 0;
+            end
+        catch
+            % do nothing
+        end
         [loop.gap(1, 1), loop.gap(2, 1)]                    = getCurrentGap(towardsCar, noise);
 
         % Append to storage matricies for later plotting
@@ -216,13 +234,14 @@ while test.trials > 0
             if loop.eventOverTimer == 0
                 % Handles when an event has occured
 
-                [loop, noise] = getPostEventResponse(loop, noise, scrn, cyclist, road, verge, centreline, keys, test, camera, "ongoing");
-
+                [loop, noise] = getPostEventResponse(loop, noise, scrn, cyclist, road, verge, centreline, keys, test, camera, "ongoing", emg);
+                cyclist.potentialEnd = noise.yNoise;                % Update Cyclist potential end zone
+                withCar.potentialEnd = noise.yNoise;                % Update the same for cars in your lane
             else
                 % Handles when an event has not occured
                 
                 % Handles Button Presses
-                loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, [1, 0, 0, 1, 1, 1]);
+                loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, [1, 0, 0, 1, 0, 1], emg);
                 if loop.breakFlag == true
                     break;
                 end 
@@ -232,7 +251,7 @@ while test.trials > 0
             % This handles trials where the subject is in continuous control of their speed
 
             % Handles Button Presses
-            loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, [1, 1, 1, 1, 1, 1]);
+            loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, [1, 1, 1, 1, 0, 1], emg);
             if loop.breakFlag == true
                 break;
             end
@@ -287,4 +306,4 @@ if ~loop.skipPlot
 end
 
 results.gravityCollisions                               = [0.15, 0.7, 0.8];           % order of R, G, B -> towardsCar, Cyclist, withCar
-[results.bikeDist, results.carDist, results.car2Dist]   = plotGravityScoring(loop, towardsCar, cyclist, withCar, results.gravityCollisions);
+[results.bikeDist, results.carDist, results.car2Dist]   = plotGravityScoring(results, towardsCar, cyclist, withCar, results.gravityCollisions);

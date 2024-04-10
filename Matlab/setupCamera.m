@@ -18,6 +18,7 @@ function camera = setupCamera(car, road)
     % Controlling the speed and acceleration of the camera's frame
     camera.continuousAcceleration   = ((100/3.6)/9);                        % We are assuming this car is a 2015 Golf which does 0-100 in 9 secs https://www.guideautoweb.com/en/articles/27805/volkswagen-golf-tdi-versus-golf-tsi-2015-two-tests-over-4-000-km/
     camera.discreteAcceleration     = (5/3.6);                              % Discrete acceleration doesn't worry about timing so it goes up in steps of km/h
+    camera.slopeOfAccFun            = 0.2/3.6;                              % m /s /frame just set by me
     camera.startSpeed               = (80/3.6);                             % Speed the car starts at
     camera.maxSpeed                 = car.maxSpeed;                         % Just copies the max speed from the car structure
     camera.absoluteMinSpeed         = (1/3.6);

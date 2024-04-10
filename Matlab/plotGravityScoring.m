@@ -1,7 +1,7 @@
-function [bikeDist, towardsCarDist, withCarDist] = gravityScoring(loop, towardsCar, cyclist, withCar, collisionThresholds)
+function [bikeDist, towardsCarDist, withCarDist] = plotGravityScoring(results, towardsCar, cyclist, withCar, collisionThresholds)
 
     
-    for i = 1:length(loop.bikeY)
+    for i = 1:length(results.bikeY)
         
         % Call things related to the figures
         figure;
@@ -11,22 +11,22 @@ function [bikeDist, towardsCarDist, withCarDist] = gravityScoring(loop, towardsC
         ylabel('$\frac{1}{distance^{2}}$','Interpreter','latex', 'fontsize', 16)
 
         % Distances to oncoming cars
-        for j = 1:height(loop.towardsCarY{i})
-            towardsCarDist{j} = sqrt((loop.towardsCarY{i}(j, :) - 0).^2 + (towardsCar.x - loop.cameraX{i}).^2);
+        for j = 1:height(results.towardsCarY{i})
+            towardsCarDist{j} = sqrt((results.towardsCarY{i}(j, :) - 0).^2 + (towardsCar.x - results.cameraX{i}).^2);
             towardsCarGrav{j} = 1./towardsCarDist{j}.^2;
             plot(towardsCarGrav{j}, 'color', 'r');
         end
         
         % Distances to bikes
-        for j = 1:height(loop.bikeY{i})
-            bikeDist{j} = sqrt((loop.bikeY{i}(j, :) - 0).^2 + (cyclist.x - loop.cameraX{i}).^2);
+        for j = 1:height(results.bikeY{i})
+            bikeDist{j} = sqrt((results.bikeY{i}(j, :) - 0).^2 + (cyclist.x - results.cameraX{i}).^2);
             bikeGrav{j} = 1./bikeDist{j}.^2;
             plot(bikeGrav{j}, 'color', 'g')
         end
 
         % Distances to in flow cars
-        for j = 1:height(loop.withCarY{i})
-            withCarDist{j} = sqrt((loop.withCarY{i}(j, :) - 0).^2 + (withCar.x - loop.cameraX{i}).^2);
+        for j = 1:height(results.withCarY{i})
+            withCarDist{j} = sqrt((results.withCarY{i}(j, :) - 0).^2 + (withCar.x - results.cameraX{i}).^2);
             withCarGrav{j} = 1./withCarDist{j}.^2;
             plot(withCarGrav{j}, 'color', 'b')
         end

@@ -16,8 +16,11 @@ function cyclist = setupCyclist(road)
     cyclist = struct();                                                 % Create Structure
     
     % Handling when the cyclist can 'disappear' from the screen
-    cyclist.potentialEnd = 5;                                           % Distance from the camera when it can 'disappear'
-    cyclist.chanceOfEnding = 1;                                         % Percentage chance of ending per frame when within that distance
+    cyclist.potentialEnd = 20;                                          % Distance from the camera when it can 'disappear'
+    cyclist.chanceOfEnding = 0.01;                                      % Percentage chance of ending per frame when within that distance
+    
+    % Determines the minimum spacing of the 'cyclists'
+    cyclist.spacing = 50;
     
     % Creating x position of 'cyclists', this is static for simplicity
     cyclist.curbDist = 0.5;                                             % Distance 'cyclist' will be drawn from the curb

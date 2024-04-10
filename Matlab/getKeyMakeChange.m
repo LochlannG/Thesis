@@ -1,4 +1,4 @@
-function loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, whichKeys)
+function loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, whichKeys, emg)
 % loop = checkKey(loop, keys, whichKeys)
 % Check keys and update values in the loop structure based on those inputs 
 %
@@ -10,7 +10,8 @@ function loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, whichK
 % camera            -   camera structure from TaskScript.m file, contains details for the camera object
 % scrn              -   scrn structure from TaskScript.m file, contains details for the current screen object
 % whichKeys         -   (1 x 6) vector containing which keys are to be considered in the order of esc, return, up, down, left, right
-% 
+% emg               -   emg Object created from EMGtriggers.m class 
+%
 % Outputs:
 % loop            -   loop structure from TaskScript.m file, contains updated details of current loop
 %
@@ -25,6 +26,7 @@ function loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, whichK
     
     % Will close the loop if returned true, defaults to false
     loop.breakFlag = false;
+    loop.hitMinSpeedFlag = true;
     
     % Escape Key
     if all(keys.Code(keys.escape)) && whichKeys(1) == 1
@@ -55,42 +57,54 @@ function loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, whichK
         if loop.cameraVCurrent >= camera.maxSpeed
             loop.cameraVCurrent = camera.maxSpeed;
         end
-
     end
     
     % Down arrow key
+    % If key enabled AND pressed
     if all(keys.Code(keys.dw)) && whichKeys(4) == 1
         % Handles slowing down
         if test.debug == 1
             disp("Slow Down")
         end
         
+        if loop.nFramesSlowing == 0
+            loop.nFramesSlowing = 1;
+            emg.onMarker();
+        end
+        
         if test.discreteSpeed
-            loop.cameraVCurrent = loop.cameraVCurrent - camera.discreteAcceleration;
 
             % Defining a minimum value for speed, I love getting a chance
             % to use switch - case statements they are very fancy
-            switch loop.whichType
-                case 0 % equally far away (This one is pretty unlikely)
-                    minSpeed = min(cyclist.speed);
-                case 1 % cyclist first
-                    minSpeed = cyclist.speed(loop.whichInstance(1));
-                case 2 % withCar first
-                    minSpeed = min(cyclist.speed);
-                case 3 % neither first
-                    % I'm not sure what to do with this case so I'll just set it to a minimum
-                    minSpeed = camera.absoluteMinSpeed;
-            end
-
-            % This just helps round the numbers for display
-            if loop.eventOverTimer ~= 0
-                if loop.cameraVCurrent <= minSpeed
-                    loop.cameraVCurrent = minSpeed;
+            if any(strcmp(fieldnames(loop), 'whichType'))
+                switch loop.whichType
+                    case 1
+                         minSpeed = cyclist.speed(loop.whichInstance(1));
+                    otherwise
+                        minSpeed = min(cyclist.speed);
                 end
             else
+                minSpeed = min(cyclist.speed);
+            end
+            
+            disp(["Current Speed", num2str(loop.cameraVCurrent)])
+            
+            % This just helps round the numbers for display
+            if loop.eventOverTimer == 0 || loop.firstDisplay == 1
+                % When the event is over
+                loop.cameraVCurrent = loop.cameraVCurrent - camera.discreteAcceleration;
                 if loop.cameraVCurrent <= 15/3.6
                     loop.cameraVCurrent = 15/3.6;
                 end
+            elseif loop.oneVis      % if something isn't visible you can't slow down
+                % When the trial screen is in place
+                loop.cameraVCurrent = loop.cameraVCurrent - (loop.nFramesSlowing)*camera.slopeOfAccFun*(1/scrn.frameRate);
+                loop.nFramesSlowing = loop.nFramesSlowing + 1;
+                if loop.cameraVCurrent <= minSpeed
+                    loop.hitMinSpeedFlag = true;
+                    loop.cameraVCurrent = minSpeed;
+                end
+
             end
         else
             loop.cameraVCurrent = loop.cameraVCurrent - 5*camera.continuousAcceleration*(1/scrn.frameRate);
@@ -100,6 +114,12 @@ function loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, whichK
             loop.cameraVCurrent = 0;
         end
 
+    else
+        
+        % If the down button hasn't been pressed this frame
+        loop.nFramesSlowing = 0;
+        emg.offMarker();
+        
     end
     
     % Left arrow key
@@ -119,6 +139,9 @@ function loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, whichK
             disp("Overtake")
         end
         loop.setOvertake = true;
+        
+        % ping EMG
+        emg.smlTaskMarker();
 
     end
     
