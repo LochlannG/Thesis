@@ -155,32 +155,29 @@
 		\subfile{sections/front/abstract}
 	\end{doublespace}
 	\subfile{sections/front/statement}
-	\subfile{sections/front/collaborations}
 	\subfile{sections/front/acknowledgements}
-	\subfile{sections/front/dedication}
 	\listoftables
 	\listoffigures
-	\listofalgorithms
-	\addcontentsline{toc}{chapter}{List of Algorithms}
-	\subfile{refs/publications}
 \end{singlespace}
 
 \mainmatter
 \subfile{sections/main/intro}
-\subfile{sections/main/bg_and_rw}
-\subfile{sections/main/analysis_fw}
-\subfile{sections/main/exp_det_results}
+\subfile{sections/main/lit_review}
+\subfile{sections/main/methods}
+\subfile{sections/main/results}
+\subfile{sections/main/discussion}
 \subfile{sections/main/conclusions}
 
 \begin{singlespace}
+
+	\bibliographystyle{plainnat}
+	\bibliography{refs/references}
+
 	\clearpage
 	\noappendicestocpagenum
 	\addappheadtotoc
 	\appendixpage
 	\subfile{sections/appendices}
-	
-	\bibliographystyle{plainnat}
-	\bibliography{refs/references}
 \end{singlespace}
 
 \end{document}
