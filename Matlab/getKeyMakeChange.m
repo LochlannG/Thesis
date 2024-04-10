@@ -69,7 +69,9 @@ function loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, whichK
         
         if loop.nFramesSlowing == 0
             loop.nFramesSlowing = 1;
-            emg.onMarker();
+            if emg ~= 0
+                emg.onMarker();
+            end
         end
         
         if test.discreteSpeed
@@ -118,7 +120,9 @@ function loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, whichK
         
         % If the down button hasn't been pressed this frame
         loop.nFramesSlowing = 0;
-        emg.offMarker();
+        if emg ~= 0
+            emg.offMarker();
+        end
         
     end
     
@@ -141,7 +145,9 @@ function loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, whichK
         loop.setOvertake = true;
         
         % ping EMG
-        emg.smlTaskMarker();
+        if emg ~= 0
+            emg.smlTaskMarker();
+        end
 
     end
     

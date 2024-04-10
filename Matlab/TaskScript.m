@@ -35,7 +35,8 @@ keys    = setupKeys();                                  % Defining parameters - 
 
 %% %%%%%%%%%%%%%%%%%%%
 %%% Handling pinging the EMG software
-emg = EMGtriggers(hex2dec('4FF8'));
+% emg = EMGtriggers(hex2dec('4FF8'));
+emg = 0;
 
 %% %%%%%%%%%%%%%%%%%%%
 %%% Main trial loop
@@ -44,7 +45,7 @@ while test.trials > 0
     
     %%%%%%%%%%%%%%%%%%%%%
     % Ping the software to say the trial has begun
-    emg.bigTaskMarker();
+%     emg.bigTaskMarker();
 
     %%%%%%%%%%%%%%%%%%%%%
     %%% Displays a message to the user
