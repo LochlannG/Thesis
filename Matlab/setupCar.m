@@ -13,7 +13,11 @@ function car = setupCar(road)
     car.spacing         = 10;                               % Minimum Distance between cars
     
     % Drawing
-    car.width           = 1.8;                              % Width of average irish car https://www.thejournal.ie/car-width-parking-ireland-6284300-Jan2024/
-    car                 = getCubeVertexes(car, 1, car.width, 1, [1, 0, 0]);
+    % https://www.nimblefins.co.uk/cheap-car-insurance/average-car-dimensions
+    % used the 'hatchback' values
+    car.width           = 1.78;                              
+    car.height          = 1.455;
+    car.length          = 4.27;
+    car                 = getCubeVertexes(car, car.width, car.length, car.height, [1, 0, 0]);
 
 end

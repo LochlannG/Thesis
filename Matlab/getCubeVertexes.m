@@ -19,14 +19,17 @@ function cube = getCubeVertexes(cube, xScale, yScale, zScale, rgb)
 % about that kind of thing
 
     % Coordinates of each vertex
-    cube.vertexCoords = single([ 1,  1,  1;
-                                 1,  1, -1;
-                                 1, -1, -1;
-                                 1, -1,  1;
-                                -1,  1,  1;
-                                -1,  1, -1;
-                                -1, -1, -1;
-                                -1, -1,  1]);
+    cube.vertexCoords = single([ 0.5,  0.5,  1;
+                                 0.5,  0.5,  0;
+                                 0.5, -0.5,  0;
+                                 0.5, -0.5,  1;
+                                -0.5,  0.5,  1;
+                                -0.5,  0.5,  0;
+                                -0.5, -0.5,  0;
+                                -0.5, -0.5,  1]);
+
+    % Figure for debugging
+    % figure; scatter3(cube.vertexCoords(:, 1), cube.vertexCoords(:, 2), cube.vertexCoords(:, 3))
 
     % Scale the coordinates
     nVerticies = length(cube.vertexCoords);

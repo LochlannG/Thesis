@@ -64,7 +64,7 @@ function [object, loop, test, objectY] = drawAndMoveObject(object, loop, test, t
 
         % Draw object and update position
         if object.y(stimInt) <= start
-            drawOpenGLObject([object.x, object.y(stimInt), 1], object, "Cube"); % Draw the object to the screen using the drawOpenGLObject function
+            drawOpenGLObject([object.x, object.y(stimInt), 0], object, "Cube"); % Draw the object to the screen using the drawOpenGLObject function
         end
         
         object.y(stimInt) = object.y(stimInt) - step;                       % Update position based on step

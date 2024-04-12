@@ -31,7 +31,7 @@ camera              = setupCamera(towardsCar, road);                % Defining p
 noise               = setupNoise();                                 % Defining parameters - Noise
 loop                = setupLoop(scrn);                              % Defining parameters - Loop
 keys                = setupKeys();                                  % Defining parameters - Loop
-[speedo, needle]    = setupSpeedometer();
+% [speedo, needle]    = setupSpeedometer();
 
 %% %%%%%%%%%%%%%%%%%%%
 %%% Handling pinging the EMG software
@@ -176,7 +176,7 @@ while test.trials > 0
         drawOpenGLObject([0, 0, -0.01], verge, "Square")    % Draw Verges
 
         % Draw Speedometer
-        drawSpeedometer(loop, speedo, needle, camera)
+%         drawSpeedometer(loop, speedo, needle, camera)
 
         % Draw Centreline
         for i = 1:length(centreline.y)                      
@@ -198,7 +198,7 @@ while test.trials > 0
 
         %%%%%%%%%%%%%%%%%%%%%
         %%% Drawingiong objects
-        % Drawing the various 'road users' to the screen
+        % Drawing the various 'road users' to the screen        
         [cyclist, loop, test, loop.bikeYCurrent]            = drawAndMoveObject(cyclist, loop, test, 1);                % Drawing cyclist
         [withCar, loop, test, loop.withCarYCurrent]         = drawAndMoveObject(withCar, loop, test, 2);                % Drawing other in flow cars
         [towardsCar, loop, test, loop.towardsCarYCurrent]   = drawAndMoveObject(towardsCar, loop, test, 3);             % Drawing other oncoming cars
