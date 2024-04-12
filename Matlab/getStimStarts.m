@@ -1,5 +1,5 @@
-function [accepted, logical] = getStarts(testLengthM, maxStartDistance, closestDist, rate)
-% [accepted, logical] = getStarts(testLengthM, startDistance, rate)
+function [accepted, logical] = getStimStarts(testLengthM, maxStartDistance, closestDist, rate, avoid)
+% [accepted, logical] = getStimStarts(testLengthM, startDistance, rate)
 % Pseudo-randomly generate a number of points in the sample space of testLengthM
 % determined by the rate parameter. The minimum distance these points can
 % be from each other is determined by the 'closestDist' parameter
@@ -9,6 +9,7 @@ function [accepted, logical] = getStarts(testLengthM, maxStartDistance, closestD
 % startDistance     -   Distance that an object start from
 % closestDist       -   The closest acceptable distance two points can be chosen
 % rate              -   Expected number of objects
+% avoid             -   Contains details of another list of objects to space these choices away from
 %
 % Outputs:
 % accepted          -   A sorted list of n samples in space 0:testLengthM-startDistance
@@ -55,10 +56,16 @@ function [accepted, logical] = getStarts(testLengthM, maxStartDistance, closestD
         
         % Find Distance
         distance = accepted - idx;
+        if ~isempty(avoid)
+            distAvoid = avoid - idx;
+            needToAvoid = abs(distAvoid) >= closestDist;
+        else
+            needToAvoid = true;
+        end
         
         % Accept point if the distance is far enough
         
-        if abs(distance(1:numPoints)) >= closestDist
+        if all([abs(distance(1:numPoints)) >= closestDist, needToAvoid])
             numPoints = numPoints + 1;
             accepted(numPoints) = idx;
             if debug; disp("Point Accepted"); end
