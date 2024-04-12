@@ -48,19 +48,25 @@ function [object, loop, test, objectY] = drawAndMoveObject(object, loop, test, t
     objectY = nan(object.n, 1);
     for stimInt = find(object.stimOn, 1, "first"):find(object.stimOn, 1, "last")
         
-            % Finds what type of object we are working on and takes out
-            % the appropriate 'step' which is the distance travelled by
-            % that object in a frame
-            if type == 1        % bike
-                step = loop.bikeStep(stimInt);
-            elseif type == 2    % with car
-                step = loop.inFlowCarStep;
-            elseif type == 3    % towards car
-                step = loop.oncomingCarStep;
-            end
+        % Finds what type of object we are working on and takes out
+        % the appropriate 'step' which is the distance travelled by
+        % that object in a frame
+        if type == 1        % bike
+            step = loop.bikeStep(stimInt);
+            start = object.start(stimInt);
+        elseif type == 2    % with car
+            step = loop.inFlowCarStep;
+            start = object.start;
+        elseif type == 3    % towards car
+            step = loop.oncomingCarStep;
+            start = object.start;
+        end
 
         % Draw object and update position
-        drawOpenGLObject([object.x, object.y(stimInt), 1], object, "Cube"); % Draw the object to the screen using the drawOpenGLObject function
+        if object.y(stimInt) <= start
+            drawOpenGLObject([object.x, object.y(stimInt), 1], object, "Cube"); % Draw the object to the screen using the drawOpenGLObject function
+        end
+        
         object.y(stimInt) = object.y(stimInt) - step;                       % Update position based on step
 
         % If the y position of the 'cyclist' is less than 0 then it must 
@@ -113,6 +119,6 @@ function [object, loop, test, objectY] = drawAndMoveObject(object, loop, test, t
         
         % Store the object's position for output
         objectY(stimInt) = object.y(stimInt);
-    end
 
+    end
 end

@@ -36,10 +36,10 @@ function [accepted, logical] = getStarts(testLengthM, maxStartDistance, closestD
     nPoiss(nPoiss<1) = 1;
     
     % initialise loop variables
-    numPoints = 0;
-    count = 0;
-    maxIterations = 1000*nPoiss;
-    accepted = nan(1, nPoiss);
+    numPoints       = 0;
+    count           = 0;
+    maxIterations   = 1000*nPoiss;
+    accepted        = nan(1, nPoiss);
     
     % Loop to pick points
     while numPoints < nPoiss && count < maxIterations

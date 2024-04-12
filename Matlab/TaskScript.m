@@ -3,10 +3,9 @@
 
 clc; clear; close all;
 
-AssertOpenGL;
-
 %% %%%%%%%%%%%%%%%%%%%%
 %%% Pyschtoolbox setup
+AssertOpenGL;
 PsychDefaultSetup(2);
 InitializeMatlabOpenGL(0, 0, 0, 0);                 % Initialise this with all zeros to improve performance
 scrn = setupPsychTLBX();                            % Call psychtoolbox setup function
@@ -28,10 +27,11 @@ withCar.chanceOfEnding      = 0.01;                    	% Chance of ending per f
 withCar.spacing             = 50;                       % Minimum Distance between objects
 
 % Calling remaining setup function
-camera  = setupCamera(towardsCar, road);                % Defining parameters - Camera
-noise   = setupNoise();                                 % Defining parameters - Noise
-loop    = setupLoop(scrn);                              % Defining parameters - Loop
-keys    = setupKeys();                                  % Defining parameters - Loop
+camera              = setupCamera(towardsCar, road);                % Defining parameters - Camera
+noise               = setupNoise();                                 % Defining parameters - Noise
+loop                = setupLoop(scrn);                              % Defining parameters - Loop
+keys                = setupKeys();                                  % Defining parameters - Loop
+[speedo, needle]    = setupSpeedometer();
 
 %% %%%%%%%%%%%%%%%%%%%
 %%% Handling pinging the EMG software
@@ -92,8 +92,9 @@ while test.trials > 0
     test.nCyclists          = cyclist.n;
     cyclist.speed           = getCyclistSpeed(14/3.6, 3/3.6, 2, test.nCyclists);
     cyclist.start           = getCyclistStartPos(test.nCyclists);
-    cyclist.y               = ones(test.nCyclists, 1).*cyclist.start';
+    cyclist.y               = ones(test.nCyclists, 1)*100;%.*cyclist.start';
     cyclist.stimOn          = false(test.nCyclists, 1);
+    cyclist.stimApp         = false(test.nCyclists, 1);
     cyclist.stimCurrent     = 1;
 
     % Sets up the oncoming traffic variables for the trial loop
@@ -103,6 +104,7 @@ while test.trials > 0
     towardsCar.stimCurrent  = 1;
     towardsCar.y            = ones(test.nOncomingCars, 1)*towardsCar.start;
     towardsCar.stimOn       = false(test.nOncomingCars, 1);
+    towardsCar.stimApp      = false(test.nOncomingCars, 1);
 
     % Sets up the in flow traffic variables for the trial loop
     withCar.stimStartM      = test.lengthM - getStarts(test.lengthM, withCar.start, withCar.spacing, test.rateInFlowCar);
@@ -112,6 +114,7 @@ while test.trials > 0
     withCar.stimCurrent     = 1;
     withCar.y               = ones(test.nInFlowCars, 1)*towardsCar.start;
     withCar.stimOn          = false(test.nInFlowCars, 1);
+    withCar.stimApp         = withCar.stimOn();
 
     %%%%%%%%%%%%%%%%%%%%%
     %%% Letting the user set their speed at the start
@@ -172,10 +175,14 @@ while test.trials > 0
         drawOpenGLObject([0, 0, 0], road, "Square")         % Draw Road
         drawOpenGLObject([0, 0, -0.01], verge, "Square")    % Draw Verges
 
+        % Draw Speedometer
+        drawSpeedometer(loop, speedo, needle, camera)
+
         % Draw Centreline
         for i = 1:length(centreline.y)                      
             drawOpenGLObject([0, centreline.y(i), 0], centreline, "Square")
         end
+
         % Move Centrelines
         centreline.y = centreline.y - loop.cameraVCurrent/scrn.frameRate;
         if centreline.y(1) <= -3                            % Remove them if they are far enough away
