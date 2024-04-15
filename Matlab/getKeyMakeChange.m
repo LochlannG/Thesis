@@ -92,21 +92,31 @@ function loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, whichK
             disp(["Current Speed", num2str(loop.cameraVCurrent)])
             
             % This just helps round the numbers for display
-            if loop.eventOverTimer == 0 || loop.firstDisplay == 1
-                % When the event is over
+%             if loop.eventOverTimer == 0 || loop.firstDisplay == 1
+%                 % When the event is over
+%                 loop.cameraVCurrent = loop.cameraVCurrent - camera.discreteAcceleration;
+%                 if loop.cameraVCurrent <= 15/3.6
+%                     loop.cameraVCurrent = 15/3.6;
+%                 end
+%             else
+            
+
+            if ~loop.stopResponse % if an event has passed
+
                 loop.cameraVCurrent = loop.cameraVCurrent - camera.discreteAcceleration;
-                if loop.cameraVCurrent <= 15/3.6
-                    loop.cameraVCurrent = 15/3.6;
-                end
-            elseif loop.oneVis      % if something isn't visible you can't slow down
+                
+            elseif loop.oneVis      % if something is visible you can't slow down
+
                 % When the trial screen is in place
                 loop.cameraVCurrent = loop.cameraVCurrent - (loop.nFramesSlowing)*camera.slopeOfAccFun*(1/scrn.frameRate);
                 loop.nFramesSlowing = loop.nFramesSlowing + 1;
-                if loop.cameraVCurrent <= minSpeed
-                    loop.hitMinSpeedFlag = true;
-                    loop.cameraVCurrent = minSpeed;
-                end
 
+
+            end
+
+            if loop.cameraVCurrent <= minSpeed
+                loop.hitMinSpeedFlag = true;
+                loop.cameraVCurrent = minSpeed;
             end
         else
             loop.cameraVCurrent = loop.cameraVCurrent - 5*camera.continuousAcceleration*(1/scrn.frameRate);

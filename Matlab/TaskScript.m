@@ -28,7 +28,7 @@ withCar.spacing             = 50;                       % Minimum Distance betwe
 
 % Calling remaining setup function
 camera                      = setupCamera(towardsCar, road);                % Defining parameters - Camera
-noise                       = setupNoise();                                 % Defining parameters - Noise
+noise                       = setupNoise(scrn);                             % Defining parameters - Noise
 loop                        = setupLoop(scrn);                              % Defining parameters - Loop
 keys                        = setupKeys();                                  % Defining parameters - Loop
 [speedo, needle, marker]    = setupSpeedometer();
@@ -73,6 +73,9 @@ while test.trials > 0
     loop.cameraStartX       = camera.xyz(1);
     loop.eventOverTimer     = -1;
     loop.firstDisplay       = 1;
+    loop.stopResponse       = true;
+    loop.speedUpMaxFrames   = round(scrn.frameRate*2, 0);     % You're allowed speed up for 2 seconds following a stimulus
+    loop.speedUpLeft        = loop.speedUpMaxFrames;
     loop.nFramShown         = 0;
     loop.whichTypeStore     = []; loop.whichType = 0;
     loop.whichInstanceStore = []; loop.whichInstance = 0;
@@ -119,10 +122,11 @@ while test.trials > 0
 
     %%%%%%%%%%%%%%%%%%%%%
     %%% Letting the user set their speed at the start
-    [loop, noise] = getPostEventResponse(loop, noise, scrn, cyclist, road, verge, centreline, keys, test, camera, "first", emg);
+%     [loop, noise] = getPostEventResponse(loop, noise, scrn, cyclist, road, verge, centreline, keys, test, camera, "first", emg);
+    noise.yNoise = getDiscreteViewDist(noise.levels);
     cyclist.potentialEnd = noise.yNoise;
     withCar.potentialEnd = noise.yNoise;
-    loop.firstDisplay = 0;
+    loop.firstDisplay = true;
     
     %%%%%%%%%%%%%%%%%%%%%
     %%% OpenGL setup
@@ -149,7 +153,16 @@ while test.trials > 0
         glMatrixMode(GL.PROJECTION);
         glLoadIdentity;
         if test.discreteSpeed
-            gluPerspective(70 , 1/scrn.ar, 0.1, noise.yNoise);
+            if loop.firstDisplay
+                gluPerspective(70 , 1/scrn.ar, 0.1,  noise.yNoise);
+            else
+                gluPerspective(70 , 1/scrn.ar, 0.1, noise.vector(noise.iteration));
+                noise.iteration = noise.iteration + 1;
+                if noise.iteration >= noise.maxIter
+                    noise.iteration = noise.maxIter;
+                    loop.stopResponse = true;
+                end
+            end
         else
             gluPerspective(70 , 1/scrn.ar, 0.1, noise.yNoise(loop.currentFrame));
         end
@@ -242,21 +255,27 @@ while test.trials > 0
         %%% Handling Button Presses
         % Allows speeding up and slowing down in a discrete manner following an event
         if test.discreteSpeed
-            if loop.eventOverTimer == 0
-                % Handles when an event has occured
 
-                [loop, noise] = getPostEventResponse(loop, noise, scrn, cyclist, road, verge, centreline, keys, test, camera, "ongoing", emg);
+            if loop.eventOverTimer == 0 % Handles when an event has occured
+                [loop, noise, speedo] = getPostEventResponse(loop, noise, speedo);
                 cyclist.potentialEnd = noise.yNoise;                % Update Cyclist potential end zone
                 withCar.potentialEnd = noise.yNoise;                % Update the same for cars in your lane
-            else
-                % Handles when an event has not occured
-                
-                % Handles Button Presses
+            elseif ~loop.stopResponse % Are they allowed speed up?
+
+                loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, [1, 0, 1, 1, 0, 1], emg);
+
+            else % Handles when an event has not occured
+                rgb = [1, 1, 1];
+                speedo.vertexColors = reshape(single(ones(4, 3).*rgb)', 1, length(single(ones(4, 3).*rgb))*3);
+                % They are only allowed 
                 loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, [1, 0, 0, 1, 0, 1], emg);
-                if loop.breakFlag == true
-                    break;
-                end 
+                
             end
+
+            if loop.breakFlag == true
+                    break;
+            end
+
 
         else
             % This handles trials where the subject is in continuous control of their speed
