@@ -27,11 +27,11 @@ withCar.chanceOfEnding      = 0.01;                    	% Chance of ending per f
 withCar.spacing             = 50;                       % Minimum Distance between objects
 
 % Calling remaining setup function
-camera              = setupCamera(towardsCar, road);                % Defining parameters - Camera
-noise               = setupNoise();                                 % Defining parameters - Noise
-loop                = setupLoop(scrn);                              % Defining parameters - Loop
-keys                = setupKeys();                                  % Defining parameters - Loop
-[speedo, needle]    = setupSpeedometer();
+camera                      = setupCamera(towardsCar, road);                % Defining parameters - Camera
+noise                       = setupNoise();                                 % Defining parameters - Noise
+loop                        = setupLoop(scrn);                              % Defining parameters - Loop
+keys                        = setupKeys();                                  % Defining parameters - Loop
+[speedo, needle, marker]    = setupSpeedometer();
 
 %% %%%%%%%%%%%%%%%%%%%
 %%% Handling pinging the EMG software
@@ -164,7 +164,7 @@ while test.trials > 0
         elseif loop.setOvertake
             % If overtaking
             camera.xyz(1) = loop.cameraStartX + camera.overtakeWidth;
-            gluLookAt(camera.xyz(1)+camera.overtakeWidth, camera.xyz(2), camera.xyz(3), camera.fixPoint(1), camera.fixPoint(2), camera.fixPoint(3), camera.upVec(1), camera.upVec(2), camera.upVec(3));
+            gluLookAt(camera.xyz(1), camera.xyz(2), camera.xyz(3), camera.fixPoint(1), camera.fixPoint(2), camera.fixPoint(3), camera.upVec(1), camera.upVec(2), camera.upVec(3));
             loop.cameraXStore = [loop.cameraXStore, camera.xyz(1)+camera.overtakeWidth];  % Stores the x position of the camera
         end
     
@@ -179,7 +179,7 @@ while test.trials > 0
         drawOpenGLObject([0, 0, -0.01], [], [], verge, "Square")    % Draw Verges
 
         % Draw Speedometer
-        drawSpeedometer(loop, speedo, needle, camera)
+        drawSpeedometer(loop, speedo, needle, marker, camera)
 
         % Draw Centreline
         for i = 1:length(centreline.y)                      

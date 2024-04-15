@@ -1,4 +1,4 @@
-function [vector, newPos] = handleSpeedoVectors(camera, speedo)
+function [vector, speedoPos, needlePos, markerPos] = handleSpeedoVectors(camera, speedo)
 
     % 
     % figure
@@ -14,7 +14,9 @@ function [vector, newPos] = handleSpeedoVectors(camera, speedo)
     vector = camera.fixPoint - camera.xyz;
     vector = (vector/norm(vector));
     
-    newPos = vector*speedo.distance + camera.xyz;
+    speedoPos = vector*speedo.distance + camera.xyz;
+    needlePos = speedoPos - vector*0.02;
+    markerPos = speedoPos - vector*0.01;
     
 end
 
