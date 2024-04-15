@@ -20,7 +20,7 @@ function cyclist = setupCyclist(road)
     cyclist.chanceOfEnding = 0.01;                                      % Percentage chance of ending per frame when within that distance
     
     % Determines the minimum spacing of the 'cyclists'
-    cyclist.spacing = 50;
+    cyclist.spacing = 100;
     
     % Creating x position of 'cyclists', this is static for simplicity
     cyclist.curbDist = 0.5;                                             % Distance 'cyclist' will be drawn from the curb

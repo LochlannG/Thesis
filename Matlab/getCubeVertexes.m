@@ -18,6 +18,10 @@ function cube = getCubeVertexes(cube, xScale, yScale, zScale, rgb)
 % 2.0 - Changed the output types to be correct, openGL is very difficult
 % about that kind of thing
 
+    if isempty(cube)
+        cube = struct();
+    end
+
     % Coordinates of each vertex
     cube.vertexCoords = single([ 0.5,  0.5,  1;
                                  0.5,  0.5,  0;

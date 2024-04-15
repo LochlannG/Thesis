@@ -1,5 +1,5 @@
-function [object, loop, test, objectY] = drawAndMoveObject(object, loop, test, type)
-% [object, loop, test, objectYStore] = drawAndMoveObject(object, loop, test, type)
+function [object, loop, test, objectY] = drawAndMoveObject(object, loop, test, type, scrn)
+% [object, loop, test, objectYStore] = drawAndMoveObject(object, loop, test, type, scrn)
 % Does what it says on the tin: Handles the drawing and moving of the instances of a given OpenGL object.
 % An object can have a number of instances but the only thing that changes between them is their current position
 %
@@ -8,7 +8,7 @@ function [object, loop, test, objectY] = drawAndMoveObject(object, loop, test, t
 % loop              -   Structure holding details of the current trial loop
 % test              -   Structure containing details of how the test is setup
 % type              -   What is the object can take value [1, 2, 3] <-> [bike, withCar, towardsCar]
-% isFirst           -   Logical value, is the current object first
+% scrn              -   Structure holding details of the current scrn loop
 %
 % Outputs:
 % object            -   Updated tructure holding details of the object to be drawn and moved
@@ -97,13 +97,13 @@ function [object, loop, test, objectY] = drawAndMoveObject(object, loop, test, t
         if or(type == 1, type == 2)                                             % If one of the correct types
             if and(loop.whichType == type, loop.whichInstance(type) == stimInt) % If this instance of this object is in front
                 if object.y(stimInt) < object.potentialEnd                      % If the current instance is close enough to 'disappear'
-                    loop.nFramShown = loop.nFramShown + 1;
                     
-                    % If the random generator has picked a number that is 
-                    % below the objects chance of disappearing or the
-                    % object has been in front for more than nFramesTurn
-                    % figure
-                    if or(rand()*100<object.chanceOfEnding, and(loop.nFramShown>200, loop.hitMinSpeedFlag))
+                    if loop.hitMinSpeedFlag
+                        loop.nFramShown = loop.nFramShown + 1;
+                    end
+
+                    % If the object has been in front for more than nFramesTurn figure
+                    if and(loop.nFramShown>scrn.frameRate*2, loop.hitMinSpeedFlag)
                         loop.nFramShown = 0;
                         object.stimOn(stimInt) = false;                         % Turn the instance off
                         loop.eventOverFlag = true;                              % Flag the event as having ended

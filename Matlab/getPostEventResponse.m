@@ -28,6 +28,7 @@ function [loop, noise, speedo] = getPostEventResponse(loop, noise, speedo)
 
 % Step 1 - Change noise level
 loop.firstDisplay = false;
+loop.setOvertake = false;
 currentNoise = noise.yNoise;
 noise.yNoise = getDiscreteViewDist(noise.levels);
 

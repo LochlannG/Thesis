@@ -23,7 +23,7 @@ function test = setupContext(test)
     elseif test.context == 'urban'
         test.rateCyclist        = 5  * round(test.lengthM/1000);
         test.rateOncomingCar    = 20 * round(test.lengthM/1000);
-        test.rateInFlowCar      = 10 * round(test.lengthM/1000);
+        test.rateInFlowCar      = 5  * round(test.lengthM/1000);
 
     % The littliest bit of error checking
     else

@@ -26,7 +26,7 @@ function loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, whichK
     
     % Will close the loop if returned true, defaults to false
     loop.breakFlag = false;
-    loop.hitMinSpeedFlag = true;
+    loop.hitMinSpeedFlag = false;
     
     % Escape Key
     if all(keys.Code(keys.escape)) && whichKeys(1) == 1

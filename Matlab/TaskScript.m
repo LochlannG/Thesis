@@ -6,6 +6,7 @@ clc; clear; close all;
 %% %%%%%%%%%%%%%%%%%%%%
 %%% Pyschtoolbox setup
 AssertOpenGL;
+
 PsychDefaultSetup(2);
 InitializeMatlabOpenGL(0, 0, 0, 0);                 % Initialise this with all zeros to improve performance
 scrn = setupPsychTLBX();                            % Call psychtoolbox setup function
@@ -15,8 +16,11 @@ scrn = setupPsychTLBX();                            % Call psychtoolbox setup fu
 
 % Call setup functions
 test                        = setupTest();              % Defining parameters governing the length of the test
-[road, verge, centreline]   = setupRoad();              % Setup road & centreline
-cyclist                     = setupCyclist(road);       % Defining parameters specificly to do with the cyclist
+[road, verge, centreline]   = setupRoad();            
+% Setup road & centreline
+% Setup Cyclist
+cyclist                     = CyclistClass(road);
+cyclist                     = cyclist.getVertexes();
 
 % The car objects are clones of each other with slightly different variables
 towardsCar = setupCar(road);
@@ -24,7 +28,7 @@ withCar                     = towardsCar;               % Clone setupCar object
 withCar.x                   = -0.5*road.laneWidth;      % Move it middle of the to the other lane
 withCar.potentialEnd        = 20;                       % The distance from the camera where the object can disappear
 withCar.chanceOfEnding      = 0.01;                    	% Chance of ending per frame
-withCar.spacing             = 50;                       % Minimum Distance between objects
+withCar.spacing             = 100;                       % Minimum Distance between objects
 
 % Calling remaining setup function
 camera                      = setupCamera(towardsCar, road);                % Defining parameters - Camera
@@ -69,6 +73,7 @@ while test.trials > 0
     loop.roadLeft           = test.lengthM;
     loop.setOvertake        = false;
     loop.skipPlot           = false;
+    loop.hitMinSpeed        = false;
     loop.cameraVCurrent     = camera.startSpeed;
     loop.cameraStartX       = camera.xyz(1);
     loop.eventOverTimer     = -1;
@@ -91,15 +96,16 @@ while test.trials > 0
     %%%%%%%%%%%%%%%%%%%%%
     %%% Sets up trial loop variables for objects drawn to the screen
     % Sets up the cyclist variables for the trial loop
-    cyclist.stimStartM      = test.lengthM - getStimStarts(test.lengthM, 100, cyclist.spacing, test.rateCyclist, []);
-    cyclist.n               = length(cyclist.stimStartM);
+%     cyclist.stimStartM      = test.lengthM - getStimStarts(test.lengthM, 100, cyclist.spacing, test.rateCyclist, []);
+%     cyclist.n               = length(cyclist.stimStartM);
+    cyclist                 = cyclist.resetLoop(test);
     test.nCyclists          = cyclist.n;
-    cyclist.speed           = getCyclistSpeed(14/3.6, 3/3.6, 2, test.nCyclists);
-    cyclist.start           = getCyclistStartPos(test.nCyclists);
-    cyclist.y               = ones(test.nCyclists, 1)*100;%.*cyclist.start';
-    cyclist.stimOn          = false(test.nCyclists, 1);
-    cyclist.stimApp         = false(test.nCyclists, 1);
-    cyclist.stimCurrent     = 1;
+%     cyclist.speed           = getCyclistSpeed(14/3.6, 3/3.6, 2, test.nCyclists);
+%     cyclist.start           = getCyclistStartPos(test.nCyclists);
+%     cyclist.y               = ones(test.nCyclists, 1)*100;%.*cyclist.start';
+%     cyclist.stimOn          = false(test.nCyclists, 1);
+%     cyclist.stimApp         = false(test.nCyclists, 1);
+%     cyclist.stimCurrent     = 1;
 
     % Sets up the oncoming traffic variables for the trial loop
     towardsCar.stimStartM   = test.lengthM - getStimStarts(test.lengthM, towardsCar.start, towardsCar.spacing, test.rateOncomingCar, test.lengthM-cyclist.stimStartM);
@@ -122,9 +128,9 @@ while test.trials > 0
 
     %%%%%%%%%%%%%%%%%%%%%
     %%% Letting the user set their speed at the start
-%     [loop, noise] = getPostEventResponse(loop, noise, scrn, cyclist, road, verge, centreline, keys, test, camera, "first", emg);
     noise.yNoise = getDiscreteViewDist(noise.levels);
-    cyclist.potentialEnd = noise.yNoise;
+%     cyclist.potentialEnd = noise.yNoise;
+    cyclist = cyclist.setPotentialEnd(noise.yNoise);
     withCar.potentialEnd = noise.yNoise;
     loop.firstDisplay = true;
     
@@ -213,11 +219,11 @@ while test.trials > 0
         loop.inFlowCarStep      = (loop.cameraVCurrent - withCar.speed)/scrn.frameRate;                            % The distance a car in the camera lane will move in a frame
 
         %%%%%%%%%%%%%%%%%%%%%
-        %%% Drawingiong objects
+        %%% Drawing objects
         % Drawing the various 'road users' to the screen        
-        [cyclist, loop, test, loop.bikeYCurrent]            = drawAndMoveObject(cyclist, loop, test, 1);                % Drawing cyclist
-        [withCar, loop, test, loop.withCarYCurrent]         = drawAndMoveObject(withCar, loop, test, 2);                % Drawing other in flow cars
-        [towardsCar, loop, test, loop.towardsCarYCurrent]   = drawAndMoveObject(towardsCar, loop, test, 3);             % Drawing other oncoming cars
+        [cyclist, loop, test, loop.bikeYCurrent]            = drawAndMoveObject(cyclist, loop, test, 1, scrn);          % Drawing cyclist
+        [withCar, loop, test, loop.withCarYCurrent]         = drawAndMoveObject(withCar, loop, test, 2, scrn);          % Drawing other in flow cars
+        [towardsCar, loop, test, loop.towardsCarYCurrent]   = drawAndMoveObject(towardsCar, loop, test, 3, scrn);       % Drawing other oncoming cars
 
         % Getting which object is first & the actual/percieved 'gap'
         [loop.whichType, loop.whichInstance, loop.oneVis]   = getClosestObject(cyclist, withCar);
@@ -233,14 +239,14 @@ while test.trials > 0
         [loop.gap(1, 1), loop.gap(2, 1)]                    = getCurrentGap(towardsCar, noise);
 
         % Append to storage matricies for later plotting
-        loop.whichTypeStore     = [loop.whichTypeStore, loop.whichType];
+        loop.whichTypeStore     = [loop.whichTypeStore,     loop.whichType];
         loop.whichInstanceStore = [loop.whichInstanceStore, loop.whichInstance];
-        loop.gapStore           = [loop.gapStore, loop.gap];
-        loop.cameraVStore       = [loop.cameraVStore, loop.cameraVCurrent];
-        loop.bikeYStore         = [loop.bikeYStore, loop.bikeYCurrent];
-        loop.withCarYStore      = [loop.withCarYStore, loop.withCarYCurrent];
-        loop.towardsCarYStore   = [loop.towardsCarYStore, loop.towardsCarYCurrent];
-        loop.roadStore          = [loop.roadStore, loop.roadLeft];
+        loop.gapStore           = [loop.gapStore,           loop.gap];
+        loop.cameraVStore       = [loop.cameraVStore,       loop.cameraVCurrent];
+        loop.bikeYStore         = [loop.bikeYStore,         loop.bikeYCurrent];
+        loop.withCarYStore      = [loop.withCarYStore,      loop.withCarYCurrent];
+        loop.towardsCarYStore   = [loop.towardsCarYStore,   loop.towardsCarYCurrent];
+        loop.roadStore          = [loop.roadStore,          loop.roadLeft];
 
         % Flipping to the screen
         Screen('EndOpenGL', scrn.win);
@@ -258,7 +264,8 @@ while test.trials > 0
 
             if loop.eventOverTimer == 0 % Handles when an event has occured
                 [loop, noise, speedo] = getPostEventResponse(loop, noise, speedo);
-                cyclist.potentialEnd = noise.yNoise;                % Update Cyclist potential end zone
+%                 cyclist.potentialEnd = noise.yNoise;                % Update Cyclist potential end zone
+                cyclist = cyclist.setPotentialEnd(noise.yNoise);
                 withCar.potentialEnd = noise.yNoise;                % Update the same for cars in your lane
             elseif ~loop.stopResponse % Are they allowed speed up?
 
@@ -298,8 +305,8 @@ while test.trials > 0
         %%%%%%%%%%%%%%%%%%%%%
         %%% Handling Loop Processes
         loop.eventOverTimer = loop.eventOverTimer - 1;
-        loop.currentFrame = loop.currentFrame + 1;                  % Update loop values
-        loop.timeStore = [loop.timeStore toc];                      % Update the time tracking values
+        loop.currentFrame   = loop.currentFrame + 1;                        % Update loop values
+        loop.timeStore      = [loop.timeStore toc];                         % Update the time tracking values
     
     end
 
