@@ -31,7 +31,7 @@ camera              = setupCamera(towardsCar, road);                % Defining p
 noise               = setupNoise();                                 % Defining parameters - Noise
 loop                = setupLoop(scrn);                              % Defining parameters - Loop
 keys                = setupKeys();                                  % Defining parameters - Loop
-% [speedo, needle]    = setupSpeedometer();
+[speedo, needle]    = setupSpeedometer();
 
 %% %%%%%%%%%%%%%%%%%%%
 %%% Handling pinging the EMG software
@@ -70,6 +70,7 @@ while test.trials > 0
     loop.setOvertake        = false;
     loop.skipPlot           = false;
     loop.cameraVCurrent     = camera.startSpeed;
+    loop.cameraStartX       = camera.xyz(1);
     loop.eventOverTimer     = -1;
     loop.firstDisplay       = 1;
     loop.nFramShown         = 0;
@@ -157,10 +158,12 @@ while test.trials > 0
         % gluLookAt() is the function responsible for camera positioning in OpenGL
         if ~loop.setOvertake
             % If not overtaking
+            camera.xyz(1) = loop.cameraStartX;
             gluLookAt(camera.xyz(1), camera.xyz(2), camera.xyz(3), camera.fixPoint(1), camera.fixPoint(2), camera.fixPoint(3), camera.upVec(1), camera.upVec(2), camera.upVec(3));
             loop.cameraXStore = [loop.cameraXStore, camera.xyz(1)];    % Stores the x position of the camera
         elseif loop.setOvertake
             % If overtaking
+            camera.xyz(1) = loop.cameraStartX + camera.overtakeWidth;
             gluLookAt(camera.xyz(1)+camera.overtakeWidth, camera.xyz(2), camera.xyz(3), camera.fixPoint(1), camera.fixPoint(2), camera.fixPoint(3), camera.upVec(1), camera.upVec(2), camera.upVec(3));
             loop.cameraXStore = [loop.cameraXStore, camera.xyz(1)+camera.overtakeWidth];  % Stores the x position of the camera
         end
@@ -172,15 +175,15 @@ while test.trials > 0
         glClear();
     
         % Draw Road, Verges
-        drawOpenGLObject([0, 0, 0], road, "Square")         % Draw Road
-        drawOpenGLObject([0, 0, -0.01], verge, "Square")    % Draw Verges
+        drawOpenGLObject([0, 0, 0], [], [], road, "Square")         % Draw Road
+        drawOpenGLObject([0, 0, -0.01], [], [], verge, "Square")    % Draw Verges
 
         % Draw Speedometer
-%         drawSpeedometer(loop, speedo, needle, camera)
+        drawSpeedometer(loop, speedo, needle, camera)
 
         % Draw Centreline
         for i = 1:length(centreline.y)                      
-            drawOpenGLObject([0, centreline.y(i), 0], centreline, "Square")
+            drawOpenGLObject([0, centreline.y(i), 0], [], [], centreline, "Square")
         end
 
         % Move Centrelines

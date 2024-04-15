@@ -8,6 +8,7 @@ function [speedometer, needle] = setupSpeedometer()
     % Define constants
     speedometer.height = 0.25;
     speedometer.width = 0.5;
+    speedometer.distance = 2;
     
     speedometer.normal = [0, 0, 1];
 

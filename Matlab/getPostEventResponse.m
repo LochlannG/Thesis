@@ -62,10 +62,10 @@ function [loop, noise] = getPostEventResponse(loop, noise, scrn, cyclist, road, 
     glClear();                              % Clear out the backbuffer
 
     % Draw Road, Verges & Centrelines
-    drawOpenGLObject([0, 0, 0], road, "Square")
-    drawOpenGLObject([0, 0, -0.01], verge, "Square")
+    drawOpenGLObject([0, 0, 0], [], [], road, "Square")
+    drawOpenGLObject([0, 0, -0.01], [], [], verge, "Square")
     for i = 1:length(centreline.y)
-        drawOpenGLObject([0, centreline.y(i), 0], centreline, "Square")
+        drawOpenGLObject([0, centreline.y(i), 0], [], [], centreline, "Square")
     end
 
     Screen('EndOpenGL', scrn.win);

@@ -1,15 +1,17 @@
 function drawSpeedometer(loop, speedo, needle, camera)
-    
-    % Define local constants
-    speedoPos = [0, 3, 1];
 
     % Define local variables
-    speedRatio = loop.cameraVCurrent/camera.maxSpeed;
+%     speedRatio = loop.cameraVCurrent/camera.maxSpeed;
 
-    needlePos = speedoPos;
-    needlePos(2) = (speedoPos(1) + speedo.vertexCoords(1)) + speedoPos(1)*speedRatio;
+%     needlePos = speedo.xyz;
+%     needlePos(2) = (speedo.xyz(1) + speedo.vertexCoords(1)) + speedo.xyz(1)*speedRatio;
+    [camera.vector, speedo.xyz] = handleSpeedoVectors(camera, speedo);
 
-    drawOpenGLObject(speedoPos, speedo, "Square")
-    drawOpenGLObject(needlePos, needle, "Square")
+    % Calculate angles to rotate around
+    rotationAxis = cross(speedo.normal, camera.vector);
+    rotationAngle = rad2deg(acos(dot(speedo.normal, camera.vector)));
+    
+    drawOpenGLObject(speedo.xyz, rotationAxis, rotationAngle, speedo, "Square")
+%     drawOpenGLObject(needlePos, needle, "Square")
     
 end
