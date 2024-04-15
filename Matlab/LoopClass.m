@@ -115,7 +115,7 @@ classdef LoopClass
         function loop = updateSpeed(loop, scrn, cyclist, towardsCar, withCar)
             loop.roadLeft           = loop.roadLeft - loop.cameraVCurrent*(1/scrn.frameRate);                               % Update the amount of "road" left with the camera's "relative" speed (it's a static image)
             loop.bikeStep           = (loop.cameraVCurrent - cyclist.speed)/scrn.frameRate;                                 % The distance a bike will move in a frame
-            loop.oncomingCarStep    = (towardsCar.oncomingSpeed + loop.cameraVCurrent)/scrn.frameRate;                      % The distance a car in the other lane will move in a frame
+            loop.oncomingCarStep    = (towardsCar.speed + loop.cameraVCurrent)/scrn.frameRate;                      % The distance a car in the other lane will move in a frame
             loop.inFlowCarStep      = (loop.cameraVCurrent - withCar.speed)/scrn.frameRate;                                 % The distance a car in the camera lane will move in a frame
 
         end

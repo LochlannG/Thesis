@@ -16,24 +16,23 @@ scrn = setupPsychTLBX();                            % Call psychtoolbox setup fu
 
 % Call setup functions
 test                        = setupTest();              % Defining parameters governing the length of the test
-[road, verge, centreline]   = setupRoad();            
-% Setup road & centreline
+[road, verge, centreline]   = setupRoad();              % Setup road & centreline
+
 % Setup Cyclist
 cyclist                     = CyclistClass(road);
 cyclist                     = cyclist.getVertexes();
 
-% The car objects are clones of each other with slightly different variables
-towardsCar = setupCar(road);
-withCar                     = towardsCar;               % Clone setupCar object
-withCar.x                   = -0.5*road.laneWidth;      % Move it middle of the to the other lane
-withCar.potentialEnd        = 20;                       % The distance from the camera where the object can disappear
-withCar.chanceOfEnding      = 0.01;                    	% Chance of ending per frame
-withCar.spacing             = 100;                       % Minimum Distance between objects
+% Setup Car objects
+towardsCar  = CarClass(road, "other");
+towardsCar  = towardsCar.setEndingVals(0, 0, 0);
+towardsCar  = towardsCar.getVertexes();
+withCar     = CarClass(road, "this");
+withCar     = withCar.setEndingVals(20, 0.01, 60);
+withCar     = withCar.getVertexes();
 
-% Calling remaining setup function
+% Calling remaining setup functions
 camera                      = setupCamera(towardsCar, road);                % Defining parameters - Camera
 noise                       = setupNoise(scrn);                             % Defining parameters - Noise
-% loop                        = setupLoop(scrn);                              % Defining parameters - Loop
 loop                        = LoopClass(scrn);
 keys                        = setupKeys();                                  % Defining parameters - Loop
 [speedo, needle, marker]    = setupSpeedometer();
@@ -79,29 +78,19 @@ while test.trials > 0
     test.nCyclists          = cyclist.n;
 
     % Sets up the oncoming traffic variables for the trial loop
-    towardsCar.stimStartM   = test.lengthM - getStimStarts(test.lengthM, towardsCar.start, towardsCar.spacing, test.rateOncomingCar, test.lengthM-cyclist.stimStartM);
-    towardsCar.n            = length(towardsCar.stimStartM);
+    towardsCar              = towardsCar.resetLoop(test, cyclist, test.rateOncomingCar);
     test.nOncomingCars      = towardsCar.n;
-    towardsCar.stimCurrent  = 1;
-    towardsCar.y            = ones(test.nOncomingCars, 1)*towardsCar.start;
-    towardsCar.stimOn       = false(test.nOncomingCars, 1);
-    towardsCar.stimApp      = false(test.nOncomingCars, 1);
 
     % Sets up the in flow traffic variables for the trial loop
-    withCar.stimStartM      = test.lengthM - getStimStarts(test.lengthM, withCar.start, withCar.spacing, test.rateInFlowCar, []);
-    withCar.n               = length(towardsCar.stimStartM);
+    withCar                 = withCar.resetLoop(test, cyclist, test.rateInFlowCar);
+    withCar                 = withCar.setSpeed(min(cyclist.speed));
     test.nInFlowCars        = withCar.n;
-    withCar.speed           = min(cyclist.speed);
-    withCar.stimCurrent     = 1;
-    withCar.y               = ones(test.nInFlowCars, 1)*towardsCar.start;
-    withCar.stimOn          = false(test.nInFlowCars, 1);
-    withCar.stimApp         = withCar.stimOn();
 
     %%%%%%%%%%%%%%%%%%%%%
     %%% Letting the user set their speed at the start
     noise.yNoise = getDiscreteViewDist(noise.levels);
-    cyclist = cyclist.setPotentialEnd(noise.yNoise);
-    withCar.potentialEnd = noise.yNoise;
+    cyclist = cyclist.setEndingVals(noise.yNoise);
+    withCar = withCar.setEndingVals(noise.yNoise, 0, 100);
     loop.firstDisplay = true;
     
     %%%%%%%%%%%%%%%%%%%%%
@@ -224,7 +213,7 @@ while test.trials > 0
 
             if loop.eventOverTimer == 0 % Handles when an event has occured
                 [loop, noise, speedo] = getPostEventResponse(loop, noise, speedo);
-                cyclist = cyclist.setPotentialEnd(noise.yNoise);
+                cyclist = cyclist.setEndingVals(noise.yNoise);
                 withCar.potentialEnd = noise.yNoise;                % Update the same for cars in your lane
             elseif ~loop.stopResponse % Are they allowed speed up?
 

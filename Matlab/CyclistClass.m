@@ -6,9 +6,6 @@ classdef CyclistClass
         curbDist
         x
         y
-        vertexCoords
-        vertexColors
-        elementArray
         stimStartM
         n
         speed
@@ -16,6 +13,13 @@ classdef CyclistClass
         stimOn
         stimApp
         stimCurrent
+
+        % OpenGL Values
+        vertexCoords
+        vertexColors
+        elementArray
+
+
     end
     properties (Constant)
         % bike dimensions
@@ -59,7 +63,7 @@ classdef CyclistClass
             cyclist.stimCurrent     = 1;
         end
 
-        function cyclist = setPotentialEnd(cyclist, givenEnd)
+        function cyclist = setEndingVals(cyclist, givenEnd)
             cyclist.potentialEnd = givenEnd;
         end
     end
