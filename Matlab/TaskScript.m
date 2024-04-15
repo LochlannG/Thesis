@@ -33,7 +33,8 @@ withCar.spacing             = 100;                       % Minimum Distance betw
 % Calling remaining setup function
 camera                      = setupCamera(towardsCar, road);                % Defining parameters - Camera
 noise                       = setupNoise(scrn);                             % Defining parameters - Noise
-loop                        = setupLoop(scrn);                              % Defining parameters - Loop
+% loop                        = setupLoop(scrn);                              % Defining parameters - Loop
+loop                        = LoopClass(scrn);
 keys                        = setupKeys();                                  % Defining parameters - Loop
 [speedo, needle, marker]    = setupSpeedometer();
 
@@ -69,43 +70,13 @@ while test.trials > 0
     %%% Sets/resets loop variables for the new trial
     
     % Variables that need to be reset for each new trial
-    loop.currentFrame       = 1;
-    loop.roadLeft           = test.lengthM;
-    loop.setOvertake        = false;
-    loop.skipPlot           = false;
-    loop.hitMinSpeed        = false;
-    loop.cameraVCurrent     = camera.startSpeed;
-    loop.cameraStartX       = camera.xyz(1);
-    loop.eventOverTimer     = -1;
-    loop.firstDisplay       = 1;
-    loop.stopResponse       = true;
-    loop.speedUpMaxFrames   = round(scrn.frameRate*2, 0);     % You're allowed speed up for 2 seconds following a stimulus
-    loop.speedUpLeft        = loop.speedUpMaxFrames;
-    loop.nFramShown         = 0;
-    loop.whichTypeStore     = []; loop.whichType = 0;
-    loop.whichInstanceStore = []; loop.whichInstance = 0;
-    loop.gapStore           = [];
-    loop.timeStore          = [];
-    loop.bikeYStore         = [];
-    loop.cameraVStore       = [];
-    loop.roadStore          = [];
-    loop.towardsCarYStore   = [];
-    loop.withCarYStore      = [];
-    loop.cameraXStore       = [];
+    loop = loop.resetLoopVars(camera, test, scrn);
 
     %%%%%%%%%%%%%%%%%%%%%
     %%% Sets up trial loop variables for objects drawn to the screen
     % Sets up the cyclist variables for the trial loop
-%     cyclist.stimStartM      = test.lengthM - getStimStarts(test.lengthM, 100, cyclist.spacing, test.rateCyclist, []);
-%     cyclist.n               = length(cyclist.stimStartM);
     cyclist                 = cyclist.resetLoop(test);
     test.nCyclists          = cyclist.n;
-%     cyclist.speed           = getCyclistSpeed(14/3.6, 3/3.6, 2, test.nCyclists);
-%     cyclist.start           = getCyclistStartPos(test.nCyclists);
-%     cyclist.y               = ones(test.nCyclists, 1)*100;%.*cyclist.start';
-%     cyclist.stimOn          = false(test.nCyclists, 1);
-%     cyclist.stimApp         = false(test.nCyclists, 1);
-%     cyclist.stimCurrent     = 1;
 
     % Sets up the oncoming traffic variables for the trial loop
     towardsCar.stimStartM   = test.lengthM - getStimStarts(test.lengthM, towardsCar.start, towardsCar.spacing, test.rateOncomingCar, test.lengthM-cyclist.stimStartM);
@@ -129,7 +100,6 @@ while test.trials > 0
     %%%%%%%%%%%%%%%%%%%%%
     %%% Letting the user set their speed at the start
     noise.yNoise = getDiscreteViewDist(noise.levels);
-%     cyclist.potentialEnd = noise.yNoise;
     cyclist = cyclist.setPotentialEnd(noise.yNoise);
     withCar.potentialEnd = noise.yNoise;
     loop.firstDisplay = true;
@@ -213,11 +183,8 @@ while test.trials > 0
         end
     
         % Update speed values
-        loop.roadLeft           = loop.roadLeft - loop.cameraVCurrent*(1/scrn.frameRate);                               % Update the amount of "road" left with the camera's "relative" speed (it's a static image)
-        loop.bikeStep           = (loop.cameraVCurrent - cyclist.speed)/scrn.frameRate;                                 % The distance a bike will move in a frame
-        loop.oncomingCarStep    = (towardsCar.oncomingSpeed + loop.cameraVCurrent)/scrn.frameRate;                      % The distance a car in the other lane will move in a frame
-        loop.inFlowCarStep      = (loop.cameraVCurrent - withCar.speed)/scrn.frameRate;                            % The distance a car in the camera lane will move in a frame
-
+        loop = loop.updateSpeed(scrn, cyclist, towardsCar, withCar);
+        
         %%%%%%%%%%%%%%%%%%%%%
         %%% Drawing objects
         % Drawing the various 'road users' to the screen        
@@ -239,14 +206,7 @@ while test.trials > 0
         [loop.gap(1, 1), loop.gap(2, 1)]                    = getCurrentGap(towardsCar, noise);
 
         % Append to storage matricies for later plotting
-        loop.whichTypeStore     = [loop.whichTypeStore,     loop.whichType];
-        loop.whichInstanceStore = [loop.whichInstanceStore, loop.whichInstance];
-        loop.gapStore           = [loop.gapStore,           loop.gap];
-        loop.cameraVStore       = [loop.cameraVStore,       loop.cameraVCurrent];
-        loop.bikeYStore         = [loop.bikeYStore,         loop.bikeYCurrent];
-        loop.withCarYStore      = [loop.withCarYStore,      loop.withCarYCurrent];
-        loop.towardsCarYStore   = [loop.towardsCarYStore,   loop.towardsCarYCurrent];
-        loop.roadStore          = [loop.roadStore,          loop.roadLeft];
+        loop = loop.updateStorage();
 
         % Flipping to the screen
         Screen('EndOpenGL', scrn.win);
@@ -264,7 +224,6 @@ while test.trials > 0
 
             if loop.eventOverTimer == 0 % Handles when an event has occured
                 [loop, noise, speedo] = getPostEventResponse(loop, noise, speedo);
-%                 cyclist.potentialEnd = noise.yNoise;                % Update Cyclist potential end zone
                 cyclist = cyclist.setPotentialEnd(noise.yNoise);
                 withCar.potentialEnd = noise.yNoise;                % Update the same for cars in your lane
             elseif ~loop.stopResponse % Are they allowed speed up?
