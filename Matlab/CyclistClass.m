@@ -48,7 +48,7 @@ classdef CyclistClass
         function cyclist = getVertexes(cyclist)
 
             scal = [cyclist.xScale, cyclist.yScale, cyclist.zScale];
-            cyclist = getCubeVertexes(cyclist, scal(1), scal(2), scal(3), cyclist.rgb);
+            cyclist = getShapeVertexes(cyclist, scal(1), scal(2), scal(3), cyclist.rgb, "Cube");
             
         end
 

@@ -24,7 +24,7 @@ function drawSpeedometer(loop, speedo, needle, marker, camera)
     needle.xyz(3) = needle.xyz(3) + upOffset + speedo.height/2;
     marker.xyz(3) = marker.xyz(3) + upOffset + speedo.height/2 + marker.height/2;
 
-    workingWidth = speedo.width*2*0.75;
+    workingWidth = speedo.width*0.75;
     needle.xyz(1) = (speedo.xyz(1) - workingWidth*0.5) + workingWidth*speedRatio;
 
     % Draw the objects

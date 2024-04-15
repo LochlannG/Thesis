@@ -33,9 +33,17 @@ withCar     = withCar.getVertexes();
 % Calling remaining setup functions
 camera                      = setupCamera(towardsCar, road);                % Defining parameters - Camera
 noise                       = setupNoise(scrn);                             % Defining parameters - Noise
-loop                        = LoopClass(scrn);
-keys                        = setupKeys();                                  % Defining parameters - Loop
-[speedo, needle, marker]    = setupSpeedometer();
+keys                        = setupKeys();                                  % Defining parameters - Keys
+
+loop                        = LoopClass(scrn);                              % Defining parameters - Loop
+
+% Setup Speedometer
+speedo = SpeedoClass(0.2, 1);
+needle = SpeedoClass(0.02, 0.01);
+marker = SpeedoClass(0.1, 0.01);
+speedo = speedo.getVertexes();
+needle = needle.getVertexes();
+marker = marker.getVertexes();
 
 %% %%%%%%%%%%%%%%%%%%%
 %%% Handling pinging the EMG software
@@ -49,7 +57,7 @@ while test.trials > 0
     
     %%%%%%%%%%%%%%%%%%%%%
     % Ping the software to say the trial has begun
-%     emg.bigTaskMarker();
+    % emg.bigTaskMarker();
 
     %%%%%%%%%%%%%%%%%%%%%
     %%% Displays a message to the user
@@ -69,7 +77,7 @@ while test.trials > 0
     %%% Sets/resets loop variables for the new trial
     
     % Variables that need to be reset for each new trial
-    loop = loop.resetLoopVars(camera, test, scrn);
+    loop                    = loop.resetLoopVars(camera, test, scrn);
 
     %%%%%%%%%%%%%%%%%%%%%
     %%% Sets up trial loop variables for objects drawn to the screen
@@ -88,10 +96,10 @@ while test.trials > 0
 
     %%%%%%%%%%%%%%%%%%%%%
     %%% Letting the user set their speed at the start
-    noise.yNoise = getDiscreteViewDist(noise.levels);
-    cyclist = cyclist.setEndingVals(noise.yNoise);
-    withCar = withCar.setEndingVals(noise.yNoise, 0, 100);
-    loop.firstDisplay = true;
+    noise.yNoise            = getDiscreteViewDist(noise.levels);
+    cyclist                 = cyclist.setEndingVals(noise.yNoise);
+    withCar                 = withCar.setEndingVals(noise.yNoise, 0, 100);
+    loop.firstDisplay       = true;
     
     %%%%%%%%%%%%%%%%%%%%%
     %%% OpenGL setup
@@ -157,7 +165,7 @@ while test.trials > 0
         drawOpenGLObject([0, 0, -0.01], [], [], verge, "Square")    % Draw Verges
 
         % Draw Speedometer
-        drawSpeedometer(loop, speedo, needle, marker, camera)
+        speedo.drawSpeedometer(loop, needle, marker, camera)
 
         % Draw Centreline
         for i = 1:length(centreline.y)                      
@@ -215,14 +223,13 @@ while test.trials > 0
                 [loop, noise, speedo] = getPostEventResponse(loop, noise, speedo);
                 cyclist = cyclist.setEndingVals(noise.yNoise);
                 withCar.potentialEnd = noise.yNoise;                % Update the same for cars in your lane
-            elseif ~loop.stopResponse % Are they allowed speed up?
 
+            elseif ~loop.stopResponse % Are they allowed speed up?
                 loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, [1, 0, 1, 1, 0, 1], emg);
 
             else % Handles when an event has not occured
                 rgb = [1, 1, 1];
                 speedo.vertexColors = reshape(single(ones(4, 3).*rgb)', 1, length(single(ones(4, 3).*rgb))*3);
-                % They are only allowed 
                 loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, [1, 0, 0, 1, 0, 1], emg);
                 
             end
