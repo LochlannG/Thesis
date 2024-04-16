@@ -22,8 +22,8 @@ classdef CarClass
         spacing                     % Minimum Distance between objects
     end
     properties (Constant)
-        maxSpeed    = 100/3.6;
-        start       = 100;
+        maxSpeed    = 80/3.6;
+        start       = 80;
 
         % Dimensions
         % https://www.nimblefins.co.uk/cheap-car-insurance/average-car-dimensions

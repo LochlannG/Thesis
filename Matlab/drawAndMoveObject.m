@@ -110,7 +110,7 @@ function [object, loop, test, objectY] = drawAndMoveObject(object, loop, test, t
 
                         % Print message if in debug mode
                         if test.debug == 1
-                            disp("In-flow Car #" + num2str(stimInt) + " turned off the track")
+                            disp("Stimulus #" + num2str(stimInt) + " turned off the track")
                         end
                     end                    
                 end
