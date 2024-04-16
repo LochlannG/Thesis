@@ -6,6 +6,8 @@ classdef LoopClass
         currentTrial
         currentFrame
         eventOverTimer
+        allowResponseTimer
+        
         roadLeft
         speedUpLeft
 
@@ -118,6 +120,63 @@ classdef LoopClass
             loop.oncomingCarStep    = (towardsCar.speed + loop.cameraVCurrent)/scrn.frameRate;                      % The distance a car in the other lane will move in a frame
             loop.inFlowCarStep      = (loop.cameraVCurrent - withCar.speed)/scrn.frameRate;                                 % The distance a car in the camera lane will move in a frame
 
+        end
+        
+        function loop = restartTimers(loop, scrn)
+            loop.eventOverTimer     = 0.5*scrn.frameRate;
+            loop.allowResponseTimer = 2.0*scrn.frameRate;
+        end
+        
+        function loop = resetTopFrameFlags(loop)
+            % Flags for use during loop
+            loop.eventOverFlag = false;
+        end
+        
+        function loop = endOfFrameWrapUp(loop, toc)
+            loop.eventOverTimer     = loop.eventOverTimer - 1;
+            loop.allowResponseTimer = loop.allowResponseTimer - 1;
+            loop.currentFrame       = loop.currentFrame + 1;                        % Update loop values
+            loop.timeStore          = [loop.timeStore toc];                         % Update the time tracking values
+        
+        end
+        
+        function [l, n, w, s, c] = getUserResponse(loop, noise, withCar, speedo, cyclist, keys, camera, test, scrn, emg)
+            
+            % So I can return them without throwing errors
+            l   = loop;
+            n   = noise;
+            w   = withCar;
+            s   = speedo;
+            c   = cyclist;
+            
+            if l.eventOverTimer == 0 % Handles when an event has occured
+                % Step 1 - Change noise level
+                l.firstDisplay = false;
+                l.setOvertake = false;
+                currentNoise = n.yNoise;
+                n.yNoise = getDiscreteViewDist(n.levels);
+
+                n.vector = linspace(currentNoise, n.yNoise, n.maxIter);
+                n.iteration = 1;
+
+                % Step 2 - Turn Speedometer Green
+                s = s.unlock();
+                l.stopResponse   = false;
+                
+                % Step 3 - Update the horizon
+                c = c.setEndingVals(n.yNoise);
+                w.potentialEnd = n.yNoise;                % Update the same for cars in your lane
+
+            elseif ~l.stopResponse % Are they allowed speed up?
+                l = getKeyMakeChange(l, cyclist, keys, test, camera, scrn, [1, 0, 1, 1, 0, 1], emg);
+
+            else % Handles when an event has not occured
+                s = s.relock();
+                l = getKeyMakeChange(l, cyclist, keys, test, camera, scrn, [1, 0, 0, 1, 0, 1], emg);
+
+            end
+            
+            return;
         end
     end
 end

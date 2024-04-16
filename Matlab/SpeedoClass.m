@@ -3,6 +3,9 @@ classdef SpeedoClass
         height
         width
         xyz
+        
+        % Flags
+        unlocked
 
         % OpenGL values
         vertexCoords
@@ -25,11 +28,11 @@ classdef SpeedoClass
 
         end
 
-        function speedo = getVertexes(speedo)
-            speedo = getShapeVertexes(speedo, speedo.width, speedo.height, 0, [1, 1, 1], "Square");
+        function speedo = getVertexes(speedo, rgb)
+            speedo = getShapeVertexes(speedo, speedo.width, speedo.height, 0, rgb, "Square");
         
         end
-
+        
         function drawSpeedometer(speedo, loop, needle, marker, camera)
             
             % Define local variables
@@ -68,5 +71,20 @@ classdef SpeedoClass
             drawOpenGLObject([marker.xyz(1) + workingWidth/2, marker.xyz(2), marker.xyz(3)], marker.rotationAxis, marker.rotationAngle, marker, "Square")
         
         end
+
+        function speedo = unlock(speedo)
+            % Turn it green
+            rgb = [0, 1, 0];
+            speedo.vertexColors = reshape(single(ones(4, 3).*rgb)', 1, length(single(ones(4, 3).*rgb))*3);
+            speedo.unlocked = true;
+        end
+        
+        function speedo = relock(speedo)
+            % Turn it back to white
+            rgb = [0, 0, 0];
+            speedo.vertexColors = reshape(single(ones(4, 3).*rgb)', 1, length(single(ones(4, 3).*rgb))*3);
+            speedo.unlocked = false;
+        end
+
     end
 end

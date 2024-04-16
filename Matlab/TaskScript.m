@@ -3,6 +3,7 @@
 
 clc; clear; close all;
 
+
 %% %%%%%%%%%%%%%%%%%%%%
 %%% Pyschtoolbox setup
 AssertOpenGL;
@@ -11,12 +12,13 @@ PsychDefaultSetup(2);
 InitializeMatlabOpenGL(0, 0, 0, 0);                 % Initialise this with all zeros to improve performance
 scrn = setupPsychTLBX();                            % Call psychtoolbox setup function
 
+
 %% %%%%%%%%%%%%%%%%%%%%
 %%% Defining Parameters
-
 % Call setup functions
 test                        = setupTest();              % Defining parameters governing the length of the test
 [road, verge, centreline]   = setupRoad();              % Setup road & centreline
+results                     = struct();
 
 % Setup Cyclist
 cyclist                     = CyclistClass(road);
@@ -41,9 +43,10 @@ loop                        = LoopClass(scrn);                              % De
 speedo = SpeedoClass(0.2, 1);
 needle = SpeedoClass(0.02, 0.01);
 marker = SpeedoClass(0.1, 0.01);
-speedo = speedo.getVertexes();
-needle = needle.getVertexes();
-marker = marker.getVertexes();
+speedo = speedo.getVertexes([0, 0, 0]);
+needle = needle.getVertexes([1, 0, 0]);
+marker = marker.getVertexes([0.3, 0.3, 0.3]);
+
 
 %% %%%%%%%%%%%%%%%%%%%
 %%% Handling pinging the EMG software
@@ -55,11 +58,13 @@ emg = 0;
 
 while test.trials > 0
     
-    %%%%%%%%%%%%%%%%%%%%%
+    
+    %% %%%%%%%%%%%%%%%%%%%
     % Ping the software to say the trial has begun
     % emg.bigTaskMarker();
 
-    %%%%%%%%%%%%%%%%%%%%%
+    
+    %% %%%%%%%%%%%%%%%%%%%
     %%% Displays a message to the user
     textString = ['Current Trial: ' num2str(loop.currentTrial) '\nContext: ' test.context '\nPress return to continue'];
     DrawFormattedText(scrn.win, textString, 'center', 'center', scrn.whit);
@@ -73,13 +78,13 @@ while test.trials > 0
     end    
     
 
-    %%%%%%%%%%%%%%%%%%%%%
+    %% %%%%%%%%%%%%%%%%%%%
     %%% Sets/resets loop variables for the new trial
-    
     % Variables that need to be reset for each new trial
     loop                    = loop.resetLoopVars(camera, test, scrn);
 
-    %%%%%%%%%%%%%%%%%%%%%
+    
+    %% %%%%%%%%%%%%%%%%%%%
     %%% Sets up trial loop variables for objects drawn to the screen
     % Sets up the cyclist variables for the trial loop
     cyclist                 = cyclist.resetLoop(test);
@@ -94,14 +99,15 @@ while test.trials > 0
     withCar                 = withCar.setSpeed(min(cyclist.speed));
     test.nInFlowCars        = withCar.n;
 
-    %%%%%%%%%%%%%%%%%%%%%
+    
+    %% %%%%%%%%%%%%%%%%%%%
     %%% Letting the user set their speed at the start
     noise.yNoise            = getDiscreteViewDist(noise.levels);
     cyclist                 = cyclist.setEndingVals(noise.yNoise);
     withCar                 = withCar.setEndingVals(noise.yNoise, 0, 100);
     loop.firstDisplay       = true;
     
-    %%%%%%%%%%%%%%%%%%%%%
+    %% %%%%%%%%%%%%%%%%%%%
     %%% OpenGL setup
     
     Screen('BeginOpenGL', scrn.win);        % This is required at the start of every OpenGL frame
@@ -116,12 +122,8 @@ while test.trials > 0
         % Timing
         tic
         
-        % Flags for use during loop
-        loop.eventOverFlag = false;
-        
-        %%%%%%%%%%%%%%%%%%%%%
+        %% %%%%%%%%%%%%%%%%%%%
         %%% Camera
-    
         % Handles the setup of the perspective projection for the camera
         glMatrixMode(GL.PROJECTION);
         glLoadIdentity;
@@ -154,9 +156,9 @@ while test.trials > 0
             loop.cameraXStore = [loop.cameraXStore, camera.xyz(1)+camera.overtakeWidth];  % Stores the x position of the camera
         end
     
-        %%%%%%%%%%%%%%%%%%%%%
+        
+        %% %%%%%%%%%%%%%%%%%%%
         %%% Drawing road and centrelines
-    
         % Clear out the backbuffer
         glClear();
     
@@ -179,16 +181,21 @@ while test.trials > 0
             centreline.y    = [centreline.y centreline.y(end)+6];
         end
     
-        % Update speed values
+        % Update speed values & flags
+        loop = loop.resetTopFrameFlags();
         loop = loop.updateSpeed(scrn, cyclist, towardsCar, withCar);
         
-        %%%%%%%%%%%%%%%%%%%%%
+        
+        %% %%%%%%%%%%%%%%%%%%%
         %%% Drawing objects
         % Drawing the various 'road users' to the screen        
         [cyclist, loop, test, loop.bikeYCurrent]            = drawAndMoveObject(cyclist, loop, test, 1, scrn);          % Drawing cyclist
         [withCar, loop, test, loop.withCarYCurrent]         = drawAndMoveObject(withCar, loop, test, 2, scrn);          % Drawing other in flow cars
         [towardsCar, loop, test, loop.towardsCarYCurrent]   = drawAndMoveObject(towardsCar, loop, test, 3, scrn);       % Drawing other oncoming cars
 
+        
+        %% %%%%%%%%%%%%%%%%%%%
+        %%% Getting the 'Gap'
         % Getting which object is first & the actual/percieved 'gap'
         [loop.whichType, loop.whichInstance, loop.oneVis]   = getClosestObject(cyclist, withCar);
         
@@ -200,82 +207,50 @@ while test.trials > 0
         catch
             % do nothing
         end
-        [loop.gap(1, 1), loop.gap(2, 1)]                    = getCurrentGap(towardsCar, noise);
+        [loop.gap(1, 1), loop.gap(2, 1)]        = getCurrentGap(towardsCar, noise);
+        
 
+        %% %%%%%%%%%%%%%%%%%%%
+        %%% Wrap up at end of frame
         % Append to storage matricies for later plotting
-        loop = loop.updateStorage();
+        loop                                    = loop.updateStorage();
 
         % Flipping to the screen
         Screen('EndOpenGL', scrn.win);
         Screen('Flip', scrn.win);
-
-        % Start counter to wait 0.5 secs after the event ends before fixing
-        if loop.eventOverFlag
-            loop.eventOverTimer = 0.5*scrn.frameRate;
-        end
         
-        %%%%%%%%%%%%%%%%%%%%%
+
+        %% %%%%%%%%%%%%%%%%%%%
         %%% Handling Button Presses
-        % Allows speeding up and slowing down in a discrete manner following an event
-        if test.discreteSpeed
-
-            if loop.eventOverTimer == 0 % Handles when an event has occured
-                [loop, noise, speedo] = getPostEventResponse(loop, noise, speedo);
-                cyclist = cyclist.setEndingVals(noise.yNoise);
-                withCar.potentialEnd = noise.yNoise;                % Update the same for cars in your lane
-
-            elseif ~loop.stopResponse % Are they allowed speed up?
-                loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, [1, 0, 1, 1, 0, 1], emg);
-
-            else % Handles when an event has not occured
-                rgb = [1, 1, 1];
-                speedo.vertexColors = reshape(single(ones(4, 3).*rgb)', 1, length(single(ones(4, 3).*rgb))*3);
-                loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, [1, 0, 0, 1, 0, 1], emg);
-                
-            end
-
-            if loop.breakFlag == true
-                    break;
-            end
-
-
-        else
-            % This handles trials where the subject is in continuous control of their speed
-
-            % Handles Button Presses
-            loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, [1, 1, 1, 1, 0, 1], emg);
-            if loop.breakFlag == true
-                break;
-            end
-
+        % Start counter to wait 0.5 secs after the event ends before fixing
+        % & 2.0 seconds after the even for allowing speed
+        if loop.eventOverFlag
+            loop                                = loop.restartTimers(scrn);
         end
         
-        Screen('BeginOpenGL', scrn.win);
-    
+        % Allows speeding up and slowing down in a discrete manner following an event
+        [loop, noise, withCar, speedo, cyclist] = getUserResponse(loop, noise, withCar, speedo, cyclist, keys, camera, test, scrn, emg);
+        if loop.breakFlag == true
+            break;
+        end
+        
+        
+        %% %%%%%%%%%%%%%%%%%%%
+        %%% Wrap up at end of frame (This must happen after user response
         % Inform the debug user
         if test.debug == 1
             disp("Current Frame     = " + loop.currentFrame)        % Useful for keeping track
         end    
 
-        %%%%%%%%%%%%%%%%%%%%%
+        %% %%%%%%%%%%%%%%%%%%%
         %%% Handling Loop Processes
-        loop.eventOverTimer = loop.eventOverTimer - 1;
-        loop.currentFrame   = loop.currentFrame + 1;                        % Update loop values
-        loop.timeStore      = [loop.timeStore toc];                         % Update the time tracking values
+        loop = loop.endOfFrameWrapUp(toc);
+        Screen('BeginOpenGL', scrn.win);
     
     end
 
     % records results of the current trial stored into a cell structure
-    results.time{loop.currentTrial}             = loop.timeStore;           % Records the frame times
-    results.road{loop.currentTrial}             = loop.roadStore;           % Records the road left at each frame
-    results.bikeY{loop.currentTrial}            = loop.bikeYStore;          % Records the y position of the bikes
-    results.towardsCarY{loop.currentTrial}      = loop.towardsCarYStore;    % Records the y position of the oncoming cars
-    results.withCarY{loop.currentTrial}         = loop.withCarYStore;       % Records the y position of the cars in the lane
-    results.cameraX{loop.currentTrial}          = loop.cameraXStore;        % Records the x position of the camera
-    results.cameraV{loop.currentTrial}          = loop.cameraVStore;        % Records the speed of the camera
-    results.whatFirst{loop.currentTrial}        = loop.whichTypeStore;      % Records what type of object is first in your lane
-    results.whchFirst{loop.currentTrial}        = loop.whichInstanceStore;  % Records which instance of that object is first in your lane
-    results.gap{loop.currentTrial}              = loop.gapStore;            % Records the gaps in the right lane
+    results = updateResults(results, loop);
 
     % updates the loop value
     if ~loop.escapeFlag
@@ -287,8 +262,9 @@ while test.trials > 0
     end
 end
 
-% Close open screen
+% Close open screen at end of trial
 Screen('CloseAll');
+
 
 %% %%%%%%%%%%%%%%%%%%%
 %%% Plotting Summary Results
