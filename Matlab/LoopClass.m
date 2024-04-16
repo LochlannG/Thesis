@@ -7,6 +7,7 @@ classdef LoopClass
         currentFrame
         eventOverTimer
         allowResponseTimer
+        endResponseTimer
         
         roadLeft
         speedUpLeft
@@ -101,6 +102,7 @@ classdef LoopClass
             loop.towardsCarYStore   = [];
             loop.withCarYStore      = [];
             loop.cameraXStore       = [];
+            
         end
 
         function loop = updateStorage(loop)
@@ -112,6 +114,7 @@ classdef LoopClass
             loop.withCarYStore      = [loop.withCarYStore,      loop.withCarYCurrent];
             loop.towardsCarYStore   = [loop.towardsCarYStore,   loop.towardsCarYCurrent];
             loop.roadStore          = [loop.roadStore,          loop.roadLeft];
+            
         end
 
         function loop = updateSpeed(loop, scrn, cyclist, towardsCar, withCar)
@@ -122,20 +125,24 @@ classdef LoopClass
 
         end
         
-        function loop = restartTimers(loop, scrn)
-            loop.eventOverTimer     = 0.5*scrn.frameRate;
-            loop.allowResponseTimer = 2.0*scrn.frameRate;
+        function loop = restartTimers(loop, scrn, noise)
+            howLongToWait           = 0.5;                                          % How long after an event has passed to change the horizon
+            loop.eventOverTimer     = howLongToWait*scrn.frameRate;                 % That value converted to a number of frames
+            loop.allowResponseTimer = loop.eventOverTimer + noise.maxIter;          % How long after the event to allow the speed to be changed
+            loop.endResponseTimer   = loop.allowResponseTimer + 2*scrn.frameRate;   % How long after that to stop allowing the speed to be changed
+            
         end
         
         function loop = resetTopFrameFlags(loop)
-            % Flags for use during loop
             loop.eventOverFlag = false;
+            
         end
         
         function loop = endOfFrameWrapUp(loop, toc)
-            loop.eventOverTimer     = loop.eventOverTimer - 1;
-            loop.allowResponseTimer = loop.allowResponseTimer - 1;
-            loop.currentFrame       = loop.currentFrame + 1;                        % Update loop values
+            loop.eventOverTimer     = loop.eventOverTimer       - 1;
+            loop.allowResponseTimer = loop.allowResponseTimer   - 1;
+            loop.endResponseTimer   = loop.endResponseTimer     - 1;
+            loop.currentFrame       = loop.currentFrame + 1;                        % The tracker of current frame
             loop.timeStore          = [loop.timeStore toc];                         % Update the time tracking values
         
         end
@@ -149,6 +156,7 @@ classdef LoopClass
             s   = speedo;
             c   = cyclist;
             
+            % Statements to handle when to change things
             if l.eventOverTimer == 0 % Handles when an event has occured
                 % Step 1 - Change noise level
                 l.firstDisplay = false;
@@ -158,25 +166,28 @@ classdef LoopClass
 
                 n.vector = linspace(currentNoise, n.yNoise, n.maxIter);
                 n.iteration = 1;
-
-                % Step 2 - Turn Speedometer Green
-                s = s.unlock();
-                l.stopResponse   = false;
                 
-                % Step 3 - Update the horizon
+                % Update the areas where the cyclist & with car are allowed disappear
                 c = c.setEndingVals(n.yNoise);
-                w.potentialEnd = n.yNoise;                % Update the same for cars in your lane
+                w.potentialEnd = n.yNoise;
 
-            elseif ~l.stopResponse % Are they allowed speed up?
-                l = getKeyMakeChange(l, cyclist, keys, test, camera, scrn, [1, 0, 1, 1, 0, 1], emg);
+            elseif l.allowResponseTimer == 0
 
-            else % Handles when an event has not occured
+                % Step 2 - Turn Speedometer Green & allow a response
+                s = s.unlock();
+                l.stopResponse = false;
+                
+            elseif l.endResponseTimer == 0
+                l.stopResponse = true;
                 s = s.relock();
-                l = getKeyMakeChange(l, cyclist, keys, test, camera, scrn, [1, 0, 0, 1, 0, 1], emg);
-
             end
             
-            return;
+            % Get the users key input
+            l = getKeyMakeChange(l, s, cyclist, keys, test, camera, scrn, [1, 0, 1, 1, 0, 1], emg);
+
+            
         end
+        
     end
+    
 end

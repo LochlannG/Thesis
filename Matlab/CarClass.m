@@ -44,10 +44,11 @@ classdef CarClass
         end
 
         function car = getVertexes(car)
+            % Gets vertexes of the 'car'
             car = getShapeVertexes(car, car.width, car.len, car.height, [1, 0, 0], "Cube");
         end
 
-        function car = setEndingVals(car, givenEnd,givenChance, givenSpacing)
+        function car = setEndingVals(car, givenEnd, givenChance, givenSpacing)
             car.potentialEnd    = givenEnd;
             car.chanceOfEnding  = givenChance;
             car.spacing         = givenSpacing;

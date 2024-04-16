@@ -1,9 +1,10 @@
-function loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, whichKeys, emg)
+function loop = getKeyMakeChange(loop, speedo, cyclist, keys, test, camera, scrn, whichKeys, emg)
 % loop = checkKey(loop, keys, whichKeys)
 % Check keys and update values in the loop structure based on those inputs 
 %
 % Inputs:
 % loop              -   loop structure from TaskScript.m file, contains details of current loop
+% speedo            -   loop structure from TaskScript.m file, contains details of current speedometer
 % cyclist           -   cyclist structure from TaskScript.m file, contains values for cyclist object
 % keys              -   keys structure from TaskScript.m file, contains values for the current keyboard
 % test              -   test structure from TaskScript.m file, contains details for the current test
@@ -48,10 +49,8 @@ function loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, whichK
             disp("Speed Up")
         end
         
-        if test.discreteSpeed
+        if speedo.unlocked
             loop.cameraVCurrent = loop.cameraVCurrent + camera.discreteAcceleration;
-        else
-            loop.cameraVCurrent = loop.cameraVCurrent + camera.continuousAcceleration*(1/scrn.frameRate);
         end
         
         if loop.cameraVCurrent >= camera.maxSpeed
@@ -89,23 +88,13 @@ function loop = getKeyMakeChange(loop, cyclist, keys, test, camera, scrn, whichK
                 minSpeed = min(cyclist.speed);
             end
             
-            disp(["Current Speed", num2str(loop.cameraVCurrent)])
-            
-            % This just helps round the numbers for display
-%             if loop.eventOverTimer == 0 || loop.firstDisplay == 1
-%                 % When the event is over
-%                 loop.cameraVCurrent = loop.cameraVCurrent - camera.discreteAcceleration;
-%                 if loop.cameraVCurrent <= 15/3.6
-%                     loop.cameraVCurrent = 15/3.6;
-%                 end
-%             else
-            
+%             disp(["Current Speed", num2str(loop.cameraVCurrent)])
 
-            if ~loop.stopResponse % if an event has passed
+            if speedo.unlocked % if an event has passed
 
                 loop.cameraVCurrent = loop.cameraVCurrent - camera.discreteAcceleration;
                 
-            elseif loop.oneVis      % if something is visible you can't slow down
+            elseif loop.oneVis      % if something isn't visible you can't slow down
 
                 % When the trial screen is in place
                 loop.cameraVCurrent = loop.cameraVCurrent - (loop.nFramesSlowing)*camera.slopeOfAccFun*(1/scrn.frameRate);

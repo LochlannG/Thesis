@@ -225,11 +225,11 @@ while test.trials > 0
         % Start counter to wait 0.5 secs after the event ends before fixing
         % & 2.0 seconds after the even for allowing speed
         if loop.eventOverFlag
-            loop                                = loop.restartTimers(scrn);
+            loop                                = loop.restartTimers(scrn, noise);
         end
         
         % Allows speeding up and slowing down in a discrete manner following an event
-        [loop, noise, withCar, speedo, cyclist] = getUserResponse(loop, noise, withCar, speedo, cyclist, keys, camera, test, scrn, emg);
+        [loop, noise, withCar, speedo, cyclist] = loop.getUserResponse(noise, withCar, speedo, cyclist, keys, camera, test, scrn, emg);
         if loop.breakFlag == true
             break;
         end
