@@ -38,7 +38,7 @@ loop                        = LoopClass(scrn);                              % De
 
 % Setup Speedometer
 speedo = SpeedoClass(0.2, 1);
-needle = SpeedoClass(0.02, 0.01);
+needle = SpeedoClass(0.1, 0.01);
 marker = SpeedoClass(0.1, 0.01);
 speedo = speedo.getVertexes([0, 0, 0]);
 needle = needle.getVertexes([1, 0, 0]);
