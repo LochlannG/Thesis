@@ -7,11 +7,9 @@ clc; clear; close all;
 %% %%%%%%%%%%%%%%%%%%%%
 %%% Pyschtoolbox setup
 AssertOpenGL;
-
 PsychDefaultSetup(2);
 InitializeMatlabOpenGL(0, 0, 0, 0);                 % Initialise this with all zeros to improve performance
 scrn = setupPsychTLBX();                            % Call psychtoolbox setup function
-
 
 %% %%%%%%%%%%%%%%%%%%%%
 %%% Defining Parameters
@@ -36,7 +34,6 @@ withCar     = withCar.getVertexes();
 camera                      = setupCamera(towardsCar, road);                % Defining parameters - Camera
 noise                       = setupNoise(scrn);                             % Defining parameters - Noise
 keys                        = setupKeys();                                  % Defining parameters - Keys
-
 loop                        = LoopClass(scrn);                              % Defining parameters - Loop
 
 % Setup Speedometer
@@ -144,18 +141,7 @@ while test.trials > 0
     
         % Handles camera positioning & fixation
         % gluLookAt() is the function responsible for camera positioning in OpenGL
-        if ~loop.setOvertake
-            % If not overtaking
-            camera.xyz(1) = loop.cameraStartX;
-            gluLookAt(camera.xyz(1), camera.xyz(2), camera.xyz(3), camera.fixPoint(1), camera.fixPoint(2), camera.fixPoint(3), camera.upVec(1), camera.upVec(2), camera.upVec(3));
-            loop.cameraXStore = [loop.cameraXStore, camera.xyz(1)];    % Stores the x position of the camera
-        elseif loop.setOvertake
-            % If overtaking
-            camera.xyz(1) = loop.cameraStartX + camera.overtakeWidth;
-            gluLookAt(camera.xyz(1), camera.xyz(2), camera.xyz(3), camera.fixPoint(1), camera.fixPoint(2), camera.fixPoint(3), camera.upVec(1), camera.upVec(2), camera.upVec(3));
-            loop.cameraXStore = [loop.cameraXStore, camera.xyz(1)+camera.overtakeWidth];  % Stores the x position of the camera
-        end
-    
+        [loop, camera] = loop.overtakeHandling(camera);
         
         %% %%%%%%%%%%%%%%%%%%%
         %%% Drawing road and centrelines

@@ -187,6 +187,28 @@ classdef LoopClass
 
             
         end
+
+        function [loop, camera] = overtakeHandling(loop, camera)
+            if ~loop.setOvertake % This is default setting if not overtaking
+
+                camera.xyz(1) = loop.cameraStartX;
+                gluLookAt(camera.xyz(1), camera.xyz(2), camera.xyz(3), camera.fixPoint(1), camera.fixPoint(2), camera.fixPoint(3), camera.upVec(1), camera.upVec(2), camera.upVec(3));
+                loop.cameraXStore = [loop.cameraXStore, camera.xyz(1)];    % Stores the x position of the camera
+                
+            elseif loop.setOvertake % This is the special case where the camera is overtaking
+
+                camera.xyz(1) = loop.cameraStartX + camera.overtakeWidth;
+                gluLookAt(camera.xyz(1), camera.xyz(2), camera.xyz(3), camera.fixPoint(1), camera.fixPoint(2), camera.fixPoint(3), camera.upVec(1), camera.upVec(2), camera.upVec(3));
+                loop.cameraXStore = [loop.cameraXStore, camera.xyz(1)+camera.overtakeWidth];  % Stores the x position of the camera
+
+                % Speed up the car
+                loop.cameraVCurrent = loop.cameraVCurrent + camera.discreteAcceleration;
+                if loop.cameraVCurrent >= camera.maxSpeed
+                    loop.cameraVCurrent = camera.maxSpeed;
+                end
+
+            end
+        end
         
     end
     
