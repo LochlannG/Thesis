@@ -95,8 +95,8 @@ classdef SpeedoClass
             vector = (vector/norm(vector));
 
             speedoPos = vector*speedo.distance + camera.xyz;
-            needlePos = speedoPos - vector*0.02;
-            markerPos = speedoPos - vector*0.01;
+            needlePos = speedoPos - vector*0.004;
+            markerPos = speedoPos - vector*0.003;
         end
         
     end
