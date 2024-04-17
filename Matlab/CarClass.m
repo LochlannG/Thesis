@@ -18,12 +18,14 @@ classdef CarClass
 
         % Specific to the car in 'this' lane I should use a child class but cannot be bothered
         potentialEnd                % The distance from the camera where the object can disappear
-        chanceOfEnding              % Chance of ending per frame
-        spacing                     % Minimum Distance between objects
+
     end
     properties (Constant)
-        maxSpeed    = 80/3.6;
-        start       = 80;
+        maxSpeed        = 80/3.6;
+        start           = 80;
+
+        chanceOfEnding  = 0.01           % Chance of ending per frame
+        spacing         = 60             % Minimum Distance between objects
 
         % Dimensions
         % https://www.nimblefins.co.uk/cheap-car-insurance/average-car-dimensions
@@ -48,10 +50,8 @@ classdef CarClass
             car = getShapeVertexes(car, car.width, car.len, car.height, [1, 0, 0], "Cube");
         end
 
-        function car = setEndingVals(car, givenEnd, givenChance, givenSpacing)
+        function car = setEndingVals(car, givenEnd)
             car.potentialEnd    = givenEnd;
-            car.chanceOfEnding  = givenChance;
-            car.spacing         = givenSpacing;
         end
 
         function car = resetLoop(car, test, cyclist, rate)

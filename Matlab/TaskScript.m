@@ -24,10 +24,10 @@ cyclist                     = cyclist.getVertexes();
 
 % Setup Car objects
 towardsCar  = CarClass(road, "other");
-towardsCar  = towardsCar.setEndingVals(0, 0, 0);
+towardsCar  = towardsCar.setEndingVals(0);
 towardsCar  = towardsCar.getVertexes();
 withCar     = CarClass(road, "this");
-withCar     = withCar.setEndingVals(20, 0.01, 60);
+withCar     = withCar.setEndingVals(20);
 withCar     = withCar.getVertexes();
 
 % Calling remaining setup functions
@@ -101,7 +101,7 @@ while test.trials > 0
     %%% Letting the user set their speed at the start
     noise.yNoise            = getDiscreteViewDist(noise.levels);
     cyclist                 = cyclist.setEndingVals(noise.yNoise);
-    withCar                 = withCar.setEndingVals(noise.yNoise, 0, 100);
+    withCar                 = withCar.setEndingVals(noise.yNoise);
     loop.firstDisplay       = true;
     
     %% %%%%%%%%%%%%%%%%%%%
@@ -141,7 +141,7 @@ while test.trials > 0
     
         % Handles camera positioning & fixation
         % gluLookAt() is the function responsible for camera positioning in OpenGL
-        [loop, camera] = loop.overtakeHandling(camera);
+        [loop, camera] = loop.overtakeHandling(camera, scrn);
         
         %% %%%%%%%%%%%%%%%%%%%
         %%% Drawing road and centrelines

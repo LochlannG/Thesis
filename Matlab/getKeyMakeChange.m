@@ -141,7 +141,8 @@ function loop = getKeyMakeChange(loop, speedo, cyclist, keys, test, camera, scrn
         if test.debug == 1
             disp("Overtake")
         end
-        loop.setOvertake = true;
+        
+        loop = loop.startOvertake(scrn);
         
         % ping EMG
         if emg ~= 0

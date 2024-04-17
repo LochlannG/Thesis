@@ -15,15 +15,15 @@ function test = setupContext(test)
     
     % Rural context
     if test.context == 'rural'
-        test.rateCyclist        = 2  * round(test.lengthM/1000);
-        test.rateOncomingCar    = 10 * round(test.lengthM/1000);
-        test.rateInFlowCar      = 5  * round(test.lengthM/1000);
+        test.rateCyclist        = 1  * round(test.lengthM/1000);
+        test.rateOncomingCar    = 3 * round(test.lengthM/1000);
+        test.rateInFlowCar      = 1  * round(test.lengthM/1000);
 
     % Urban context
     elseif test.context == 'urban'
-        test.rateCyclist        = 5  * round(test.lengthM/1000);
-        test.rateOncomingCar    = 20 * round(test.lengthM/1000);
-        test.rateInFlowCar      = 5  * round(test.lengthM/1000);
+        test.rateCyclist        = 3 * round(test.lengthM/1000);
+        test.rateOncomingCar    = 5 * round(test.lengthM/1000);
+        test.rateInFlowCar      = 3 * round(test.lengthM/1000);
 
     % The littliest bit of error checking
     else

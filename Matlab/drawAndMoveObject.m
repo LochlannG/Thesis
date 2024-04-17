@@ -83,6 +83,9 @@ function [object, loop, test, objectY] = drawAndMoveObject(object, loop, test, t
         if object.y(stimInt) < -2
 
             object.stimOn(stimInt) = false;                                 % Turn the object off
+            if or(type == 1, type == 2)
+                loop.eventOverFlag = true;
+            end
 
             % Print message if in debug mode
             if test.debug == 1

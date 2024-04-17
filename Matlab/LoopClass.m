@@ -8,13 +8,13 @@ classdef LoopClass
         eventOverTimer
         allowResponseTimer
         endResponseTimer
-        
+        overtakeTimer        
         roadLeft
         speedUpLeft
 
         % Flags
         escapeFlag
-        setOvertake
+        overtakeFlag
         skipPlot
         hitMinSpeed
         stopResponse
@@ -35,6 +35,7 @@ classdef LoopClass
         withCarYCurrent
         towardsCarYCurrent
         gap
+        overtakeSpeed
 
         % Semi Constants
         cameraStartX
@@ -77,7 +78,7 @@ classdef LoopClass
             loop.nFramShown         = 0;
 
             % Flags
-            loop.setOvertake        = false;
+            loop.overtakeFlag      	= false;
             loop.skipPlot           = false;
             loop.hitMinSpeed        = false;
             loop.stopResponse       = true;
@@ -142,6 +143,7 @@ classdef LoopClass
             loop.eventOverTimer     = loop.eventOverTimer       - 1;
             loop.allowResponseTimer = loop.allowResponseTimer   - 1;
             loop.endResponseTimer   = loop.endResponseTimer     - 1;
+            loop.overtakeTimer      = loop.overtakeTimer        - 1;
             loop.currentFrame       = loop.currentFrame + 1;                        % The tracker of current frame
             loop.timeStore          = [loop.timeStore toc];                         % Update the time tracking values
         
@@ -160,7 +162,7 @@ classdef LoopClass
             if l.eventOverTimer == 0 % Handles when an event has occured
                 % Step 1 - Change noise level
                 l.firstDisplay = false;
-                l.setOvertake = false;
+                l.overtakeFlag = false;
                 currentNoise = n.yNoise;
                 n.yNoise = getDiscreteViewDist(n.levels);
 
@@ -187,25 +189,44 @@ classdef LoopClass
 
             
         end
+        
+        function loop = startOvertake(loop, scrn)
+            loop.overtakeFlag = true;
+            loop.overtakeTimer = scrn.frameRate*3;
+            loop.overtakeSpeed = loop.cameraVCurrent;
+        end
 
-        function [loop, camera] = overtakeHandling(loop, camera)
-            if ~loop.setOvertake % This is default setting if not overtaking
+        function [loop, camera] = overtakeHandling(loop, camera, scrn)
+            if ~loop.overtakeFlag % This is default setting if not overtaking
 
                 camera.xyz(1) = loop.cameraStartX;
                 gluLookAt(camera.xyz(1), camera.xyz(2), camera.xyz(3), camera.fixPoint(1), camera.fixPoint(2), camera.fixPoint(3), camera.upVec(1), camera.upVec(2), camera.upVec(3));
                 loop.cameraXStore = [loop.cameraXStore, camera.xyz(1)];    % Stores the x position of the camera
                 
-            elseif loop.setOvertake % This is the special case where the camera is overtaking
+            elseif loop.overtakeFlag % This is the special case where the camera is overtaking
 
-                camera.xyz(1) = loop.cameraStartX + camera.overtakeWidth;
-                gluLookAt(camera.xyz(1), camera.xyz(2), camera.xyz(3), camera.fixPoint(1), camera.fixPoint(2), camera.fixPoint(3), camera.upVec(1), camera.upVec(2), camera.upVec(3));
-                loop.cameraXStore = [loop.cameraXStore, camera.xyz(1)+camera.overtakeWidth];  % Stores the x position of the camera
+                if loop.overtakeTimer > scrn.frameRate*1
+                    % Speed up the car
+                    camera.xyz(1) = loop.cameraStartX + camera.overtakeWidth;
+                    loop.cameraVCurrent = loop.cameraVCurrent + camera.continuousAcceleration*2*(1/scrn.frameRate);
+                    if loop.cameraVCurrent >= camera.maxSpeed
+                        loop.cameraVCurrent = camera.maxSpeed;
+                    end
+                elseif loop.overtakeTimer > 0        
+                    camera.xyz(1) = loop.cameraStartX;
+                    loop.cameraVCurrent = loop.cameraVCurrent - camera.continuousAcceleration*4*(1/scrn.frameRate);
+                    if loop.cameraVCurrent <= loop.overtakeSpeed
+                        loop.cameraVCurrent =  loop.overtakeSpeed;
+                    end
 
-                % Speed up the car
-                loop.cameraVCurrent = loop.cameraVCurrent + camera.discreteAcceleration;
-                if loop.cameraVCurrent >= camera.maxSpeed
-                    loop.cameraVCurrent = camera.maxSpeed;
+                elseif loop.overtakeTimer == 0
+                    camera.xyz(1) = loop.cameraStartX;
+                    loop.overtakeFlag = false;
+                    
                 end
+                
+                loop.cameraXStore = [loop.cameraXStore, camera.xyz(1)];  % Stores the x position of the camera
+                gluLookAt(camera.xyz(1), camera.xyz(2), camera.xyz(3), camera.fixPoint(1), camera.fixPoint(2), camera.fixPoint(3), camera.upVec(1), camera.upVec(2), camera.upVec(3));
 
             end
         end
