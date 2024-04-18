@@ -255,9 +255,9 @@ Screen('CloseAll');
 %% %%%%%%%%%%%%%%%%%%%
 %%% Plotting Summary Results
 close all;
-if ~loop.skipPlot
-    averageFrameRate = plotTrialSummary(loop.time{1}, loop.bikeY{1}, loop.cameraV{1}, noise.yNoise);
-end
+% if ~loop.skipPlot
+%     averageFrameRate = plotTrialSummary(loop.time{1}, loop.bikeY{1}, loop.cameraV{1}, noise.yNoise);
+% end
 
 results.gravityCollisions                               = [0.15, 0.7, 0.8];           % order of R, G, B -> towardsCar, Cyclist, withCar
 [results.bikeDist, results.carDist, results.car2Dist]   = plotGravityScoring(results, towardsCar, cyclist, withCar, results.gravityCollisions);

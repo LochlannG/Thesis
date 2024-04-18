@@ -1,16 +1,22 @@
 classdef LoopClass
+    % Class handling the variables and methods that are needed within a single trial
+    % 
+    
     properties
         % Counters
-        nFramShown
-        nFramesSlowing
-        currentTrial
-        currentFrame
-        eventOverTimer
-        allowResponseTimer
-        endResponseTimer
-        overtakeTimer        
+        nFramShown                                      % 
+        nFramesSlowing                                  %
+        currentTrial                                    % What the current trial is
+        currentFrame                                    % What the current frame is
         roadLeft
         speedUpLeft
+        
+        % Timers
+        eventOverTimer                                  % Timer counting down from when an event finishes
+        allowResponseTimer                              % Timer counting down from when an event finishes until a response allowed
+        endResponseTimer                                % Timer counting down from when a response is allowed until it isn't
+        overtakeTimer                                   % Timer counting down from when an event finishes
+        
 
         % Flags
         escapeFlag
@@ -119,18 +125,18 @@ classdef LoopClass
         end
 
         function loop = updateSpeed(loop, scrn, cyclist, towardsCar, withCar)
-            loop.roadLeft           = loop.roadLeft - loop.cameraVCurrent*(1/scrn.frameRate);                               % Update the amount of "road" left with the camera's "relative" speed (it's a static image)
-            loop.bikeStep           = (loop.cameraVCurrent - cyclist.speed)/scrn.frameRate;                                 % The distance a bike will move in a frame
-            loop.oncomingCarStep    = (towardsCar.speed + loop.cameraVCurrent)/scrn.frameRate;                      % The distance a car in the other lane will move in a frame
-            loop.inFlowCarStep      = (loop.cameraVCurrent - withCar.speed)/scrn.frameRate;                                 % The distance a car in the camera lane will move in a frame
+            loop.roadLeft           = loop.roadLeft - loop.cameraVCurrent*(1/scrn.frameRate);      	% Update the amount of "road" left with the camera's "relative" speed (it's a static image)
+            loop.bikeStep           = (loop.cameraVCurrent - cyclist.speed)/scrn.frameRate;       	% The distance a bike will move in a frame
+            loop.oncomingCarStep    = (towardsCar.speed + loop.cameraVCurrent)/scrn.frameRate;   	% The distance a car in the other lane will move in a frame
+            loop.inFlowCarStep      = (loop.cameraVCurrent - withCar.speed)/scrn.frameRate;     	% The distance a car in the camera lane will move in a frame
 
         end
         
         function loop = restartTimers(loop, scrn, noise)
-            howLongToWait           = 0.5;                                          % How long after an event has passed to change the horizon
-            loop.eventOverTimer     = howLongToWait*scrn.frameRate;                 % That value converted to a number of frames
-            loop.allowResponseTimer = loop.eventOverTimer + noise.maxIter;          % How long after the event to allow the speed to be changed
-            loop.endResponseTimer   = loop.allowResponseTimer + 2*scrn.frameRate;   % How long after that to stop allowing the speed to be changed
+            howLongToWait           = 0.5;                                                          % How long after an event has passed to change the horizon
+            loop.eventOverTimer     = howLongToWait*scrn.frameRate;                                 % That value converted to a number of frames
+            loop.allowResponseTimer = loop.eventOverTimer + noise.maxIter;                          % How long after the event to allow the speed to be changed
+            loop.endResponseTimer   = loop.allowResponseTimer + 2*scrn.frameRate;                   % How long after that to stop allowing the speed to be changed
             
         end
         
@@ -140,16 +146,23 @@ classdef LoopClass
         end
         
         function loop = endOfFrameWrapUp(loop, toc)
+            % Changes some values at the end of a frame that are used to
+            % track times during the trials
+            
+            % Reduce the timers by 1
             loop.eventOverTimer     = loop.eventOverTimer       - 1;
             loop.allowResponseTimer = loop.allowResponseTimer   - 1;
             loop.endResponseTimer   = loop.endResponseTimer     - 1;
             loop.overtakeTimer      = loop.overtakeTimer        - 1;
-            loop.currentFrame       = loop.currentFrame + 1;                        % The tracker of current frame
-            loop.timeStore          = [loop.timeStore toc];                         % Update the time tracking values
+            
+            % Other trackers
+            loop.currentFrame       = loop.currentFrame + 1;                                        % The tracker of current frame
+            loop.timeStore          = [loop.timeStore toc];                                         % Update the time tracking values
         
         end
         
         function [l, n, w, s, c] = getUserResponse(loop, noise, withCar, speedo, cyclist, keys, camera, test, scrn, emg)
+            % Handle user response within a given frame
             
             % So I can return them without throwing errors
             l   = loop;

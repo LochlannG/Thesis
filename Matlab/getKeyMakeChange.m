@@ -1,5 +1,5 @@
-function loop = getKeyMakeChange(loop, speedo, cyclist, keys, test, camera, scrn, whichKeys, emg)
-% loop = checkKey(loop, keys, whichKeys)
+function [loop, keyBinary] = getKeyMakeChange(loop, speedo, cyclist, keys, test, camera, scrn, whichKeys, emg)
+% [loop, keyBinary] = getKeyMakeChange(loop, speedo, cyclist, keys, test, camera, scrn, whichKeys, emg)
 % Check keys and update values in the loop structure based on those inputs 
 %
 % Inputs:
@@ -14,7 +14,8 @@ function loop = getKeyMakeChange(loop, speedo, cyclist, keys, test, camera, scrn
 % emg               -   emg Object created from EMGtriggers.m class 
 %
 % Outputs:
-% loop            -   loop structure from TaskScript.m file, contains updated details of current loop
+% loop              -   loop structure from TaskScript.m file, contains updated details of current loop
+% keyBinary         -   records which of the keys were pressed in a given frame
 %
 % Author - Lochlann Gallagher
 % Changelog:
@@ -29,22 +30,30 @@ function loop = getKeyMakeChange(loop, speedo, cyclist, keys, test, camera, scrn
     loop.breakFlag = false;
     loop.hitMinSpeedFlag = false;
     
+    % Opens an all zero array to record which keys
+    keyBinary = zeros(1, 6);
+    
     % Escape Key
     if all(keys.Code(keys.escape)) && whichKeys(1) == 1
         % Handles the escape key
         loop.skipPlot = true;
         loop.escapeFlag = true;
         loop.breakFlag = true;
+        keyBinary(1) = 1; 
     end
     
     if all(keys.Code(keys.enter)) && whichKeys(2) == 1
         % handles enter button
         loop.breakFlag = true;
+        keyBinary(2) = 1; 
     end
     
     % Up arrow Key
     if all(keys.Code(keys.up)) && whichKeys(3) == 1
         % Handles speeding up
+        
+        keyBinary(3) = 1; 
+        
         if test.debug == 1
             disp("Speed Up")
         end
@@ -62,6 +71,9 @@ function loop = getKeyMakeChange(loop, speedo, cyclist, keys, test, camera, scrn
     % If key enabled AND pressed
     if all(keys.Code(keys.dw)) && whichKeys(4) == 1
         % Handles slowing down
+        
+        keyBinary(4) = 1; 
+        
         if test.debug == 1
             disp("Slow Down")
         end
@@ -132,6 +144,7 @@ function loop = getKeyMakeChange(loop, speedo, cyclist, keys, test, camera, scrn
             disp("Back to lane")
         end
         loop.setOvertake = false;
+        keyBinary(5) = 1;
 
     end
     
@@ -143,6 +156,7 @@ function loop = getKeyMakeChange(loop, speedo, cyclist, keys, test, camera, scrn
         end
         
         loop = loop.startOvertake(scrn);
+        keyBinary(6) = 1; 
         
         % ping EMG
         if emg ~= 0
