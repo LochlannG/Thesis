@@ -1,15 +1,25 @@
 function test = setupTest()
+% Prompts the user to get the setup of the test
 
+    % Prompt the user
+    prompt              = {'Enter subject code:', 'nTrials:', 'Trials Distance (m):','EMG:'};
+    dlgtitle            = 'Input';
+    fieldsize           = [1 45; 1 45; 1 45; 1 45];
+    definput            = {'a','10', '2000', '0'};
+    answer              = inputdlg(prompt, dlgtitle, fieldsize, definput);
+    
+    % Variables to get about the subject & the test
     test = struct();
-    test.trials = 2;
-    test.recordEEG = false;
+    test.subjectCode    = answer{1};
+    test.trials         = str2double(answer{2});
+    test.lengthM        = str2double(answer{3});  
+    test.recordEMG      = logical(str2double(answer{4}));
 
-    % This determines the length of the trail and the amount of various stimuli you
-    % 'expect' to see come up
-    test.lengthM = 2000;                                                                    % Similar to a small journey to a shop
-    test.context = 'urban';
-    test = setupContext(test);
-    test.debug = 0;
-    test.discreteSpeed = true;
+    % Variables that don't depend on the user
+    test.recordEEG      = false;
+    test.context        = 'urban';
+    test                = setupContext(test);
+    test.debug          = 0;
+    test.discreteSpeed  = true;
 
 end
