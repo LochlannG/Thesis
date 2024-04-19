@@ -76,14 +76,16 @@ classdef SpeedoClass
         
         end
 
-        function speedo = unlock(speedo)
+        function speedo = unlock(speedo, loop)
             % Turn it green
+            disp("Speedo Unlocked " + num2str(loop.currentFrame));
             rgb = [0, 1, 0];
             speedo.vertexColors = reshape(single(ones(4, 3).*rgb)', 1, length(single(ones(4, 3).*rgb))*3);
             speedo.unlocked = true;
         end
         
-        function speedo = relock(speedo)
+        function speedo = relock(speedo, loop)
+            disp("Speedo Relocked " + num2str(loop.currentFrame));
             % Turn it back to white
             rgb = [0, 0, 0];
             speedo.vertexColors = reshape(single(ones(4, 3).*rgb)', 1, length(single(ones(4, 3).*rgb))*3);

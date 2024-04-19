@@ -42,6 +42,7 @@ classdef LoopClass
         towardsCarYCurrent
         gap
         overtakeSpeed
+        yNoise
 
         % Semi Constants
         cameraStartX
@@ -58,6 +59,7 @@ classdef LoopClass
         towardsCarYStore
         withCarYStore
         cameraXStore
+        yNoiseStore
         
     end
     properties (Constant)
@@ -73,7 +75,7 @@ classdef LoopClass
 
         end
 
-        function loop = resetLoopVars(loop, camera, test, scrn)
+        function [loop, speedo] = resetLoopVars(loop, camera, test, scrn, speedo)
 
             % Counters
             loop.currentFrame       = 1;
@@ -109,6 +111,10 @@ classdef LoopClass
             loop.towardsCarYStore   = [];
             loop.withCarYStore      = [];
             loop.cameraXStore       = [];
+            loop.yNoiseStore        = [];
+            
+            % Change other object values
+            speedo = speedo.relock(loop);
             
         end
 
@@ -121,6 +127,7 @@ classdef LoopClass
             loop.withCarYStore      = [loop.withCarYStore,      loop.withCarYCurrent];
             loop.towardsCarYStore   = [loop.towardsCarYStore,   loop.towardsCarYCurrent];
             loop.roadStore          = [loop.roadStore,          loop.roadLeft];
+            loop.yNoiseStore        = [loop.yNoiseStore,        loop.yNoise];
             
         end
 
@@ -145,7 +152,7 @@ classdef LoopClass
             
         end
         
-        function loop = endOfFrameWrapUp(loop, toc)
+        function loop = endOfFrameWrapUp(loop, toc, noise)
             % Changes some values at the end of a frame that are used to
             % track times during the trials
             
@@ -158,6 +165,7 @@ classdef LoopClass
             % Other trackers
             loop.currentFrame       = loop.currentFrame + 1;                                        % The tracker of current frame
             loop.timeStore          = [loop.timeStore toc];                                         % Update the time tracking values
+            loop.yNoise             = noise.yNoise;
         
         end
         
@@ -189,12 +197,12 @@ classdef LoopClass
             elseif l.allowResponseTimer == 0
 
                 % Step 2 - Turn Speedometer Green & allow a response
-                s = s.unlock();
+                s = s.unlock(l);
                 l.stopResponse = false;
                 
             elseif l.endResponseTimer == 0
+                s = s.relock(l);
                 l.stopResponse = true;
-                s = s.relock();
             end
             
             % Get the users key input

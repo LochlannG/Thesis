@@ -9,20 +9,20 @@ clc; clear; close all;
 AssertOpenGL;
 PsychDefaultSetup(2);
 InitializeMatlabOpenGL(0, 0, 0, 0);                 % Initialise this with all zeros to improve performance
-scrn = setupPsychTLBX();                            % Call psychtoolbox setup function
 
 %% %%%%%%%%%%%%%%%%%%%%
 %%% Defining Parameters
 % Call setup functions
 test                        = setupTest();              % Defining parameters governing the length of the test
+scrn                        = setupPsychTLBX();       	% Call psychtoolbox setup function
 [road, verge, centreline]   = setupRoad();              % Setup road & centreline
-results                     = struct();
 
 % Setup Cyclist
 cyclist                     = CyclistClass(road);
 cyclist                     = cyclist.getVertexes();
 
 % Setup Car objects
+
 towardsCar  = CarClass(road, "other");
 towardsCar  = towardsCar.setEndingVals(0);
 towardsCar  = towardsCar.getVertexes();
@@ -43,6 +43,9 @@ marker = SpeedoClass(0.1, 0.01);
 speedo = speedo.getVertexes([0, 0, 0]);
 needle = needle.getVertexes([1, 0, 0]);
 marker = marker.getVertexes([0.3, 0.3, 0.3]);
+
+% Create the results object
+results = ResultsClass(test);
 
 
 %% %%%%%%%%%%%%%%%%%%%
@@ -78,7 +81,7 @@ while test.trials > 0
     %% %%%%%%%%%%%%%%%%%%%
     %%% Sets/resets loop variables for the new trial
     % Variables that need to be reset for each new trial
-    loop                    = loop.resetLoopVars(camera, test, scrn);
+    [loop, speedo]      	= loop.resetLoopVars(camera, test, scrn, speedo);
 
     
     %% %%%%%%%%%%%%%%%%%%%
@@ -187,6 +190,7 @@ while test.trials > 0
         
         % If the object in front has changed since the last time
         try
+            
             if or(loop.whichType ~= loop.whichTypeStore(end-1), loop.whichInstance ~= loop.whichInstanceStore(end-1))
                 loop.nFramShown = 0;
             end
@@ -230,13 +234,13 @@ while test.trials > 0
 
         %% %%%%%%%%%%%%%%%%%%%
         %%% Handling Loop Processes
-        loop = loop.endOfFrameWrapUp(toc);
+        loop = loop.endOfFrameWrapUp(toc, noise);
         Screen('BeginOpenGL', scrn.win);
     
     end
 
     % records results of the current trial stored into a cell structure
-    results = updateResults(results, loop);
+    results = results.updateResults(loop);
 
     % updates the loop value
     if ~loop.escapeFlag
@@ -255,9 +259,5 @@ Screen('CloseAll');
 %% %%%%%%%%%%%%%%%%%%%
 %%% Plotting Summary Results
 close all;
-% if ~loop.skipPlot
-%     averageFrameRate = plotTrialSummary(loop.time{1}, loop.bikeY{1}, loop.cameraV{1}, noise.yNoise);
-% end
-
-results.gravityCollisions                               = [0.15, 0.7, 0.8];           % order of R, G, B -> towardsCar, Cyclist, withCar
-[results.bikeDist, results.carDist, results.car2Dist]   = plotGravityScoring(results, towardsCar, cyclist, withCar, results.gravityCollisions);
+results.save();
+[results.bikeDist, results.carDist, results.car2Dist]   = results.plotGravityScoring(towardsCar, cyclist, withCar);
