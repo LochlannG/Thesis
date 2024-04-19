@@ -259,5 +259,5 @@ Screen('CloseAll');
 %% %%%%%%%%%%%%%%%%%%%
 %%% Plotting Summary Results
 close all;
-results.save();
+results.saveResults();
 [results.bikeDist, results.carDist, results.car2Dist]   = results.plotGravityScoring(towardsCar, cyclist, withCar);
