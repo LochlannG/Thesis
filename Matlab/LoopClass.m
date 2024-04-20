@@ -17,7 +17,7 @@ classdef LoopClass
         allowResponseTimer                              % Timer counting down from when an event finishes until a response allowed
         endResponseTimer                                % Timer counting down from when a response is allowed until it isn't
         overtakeTimer                                   % Timer counting down from when an event finishes
-        
+        firstTimer                                      % Timer counting down from when the first speedo is shown
 
         % Flags
         escapeFlag
@@ -31,6 +31,7 @@ classdef LoopClass
         hitMinSpeedFlag
         firstDisplay
         slowingDownFlag
+        firstSpeedo
 
         % Variables
         cameraVCurrent
@@ -85,9 +86,9 @@ classdef LoopClass
             % Counters
             loop.currentFrame       = 1;
             loop.eventOverTimer     = -1;
-            loop.firstDisplay       = 1;
             loop.roadLeft           = test.lengthM;
             loop.speedUpLeft        = loop.speedUpMaxFrames;
+            loop.firstDisplay       = 1;
             loop.nFramShown         = 0;
             loop.nFramesSlowing     = 0;
             loop.lengthShown        = 0;
@@ -98,6 +99,7 @@ classdef LoopClass
             loop.hitMinSpeedFlag    = false;
             loop.stopResponse       = true;
             loop.overtakeOngoingFlag    = false;
+            loop.firstSpeedo        = true;
 
             % Variables
             loop.cameraVCurrent     = camera.startSpeed;
@@ -171,6 +173,7 @@ classdef LoopClass
             loop.allowResponseTimer = loop.allowResponseTimer   - 1;
             loop.endResponseTimer   = loop.endResponseTimer     - 1;
             loop.overtakeTimer      = loop.overtakeTimer        - 1;
+            loop.firstTimer         = loop.firstTimer           - 1;
             
             % Other trackers
             loop.currentFrame       = loop.currentFrame + 1;                                        % The tracker of current frame

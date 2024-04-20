@@ -105,7 +105,7 @@ while test.trials > 0
     noise.yNoise            = getDiscreteViewDist(noise.levels);
     cyclist                 = cyclist.setEndingVals(noise.yNoise);
     withCar                 = withCar.setEndingVals(noise.yNoise);
-    loop.firstDisplay       = true;
+    
     
     %% %%%%%%%%%%%%%%%%%%%
     %%% OpenGL setup
@@ -126,25 +126,37 @@ while test.trials > 0
         %%% Camera
         % Handles the setup of the perspective projection for the camera
         glMatrixMode(GL.PROJECTION);
+        
         glLoadIdentity;
-        if test.discreteSpeed
-            if loop.firstDisplay
-                gluPerspective(70 , 1/scrn.ar, 0.1,  noise.yNoise);
-            else
-                gluPerspective(70 , 1/scrn.ar, 0.1, noise.vector(noise.iteration));
-                noise.iteration = noise.iteration + 1;
-                if noise.iteration >= noise.maxIter
-                    noise.iteration = noise.maxIter;
-                    loop.stopResponse = true;
-                end
-            end
+        if loop.firstDisplay
+            gluPerspective(70 , 1/scrn.ar, 0.1,  noise.yNoise);
         else
-            gluPerspective(70 , 1/scrn.ar, 0.1, noise.yNoise(loop.currentFrame));
+            gluPerspective(70 , 1/scrn.ar, 0.1, noise.vector(noise.iteration));
+            noise.iteration = noise.iteration + 1;
+            if noise.iteration >= noise.maxIter
+                noise.iteration = noise.maxIter;
+                loop.stopResponse = true;
+            end
         end
+
+%         gluPerspective(70, 1/scrn.ar, 0.1, noise.yNoise);
     
         % Handles camera positioning & fixation
         % gluLookAt() is the function responsible for camera positioning in OpenGL
         [loop, camera] = loop.overtakeHandling(camera, scrn);
+        
+        %% %%%%%%%%%%%%%%%%%%%
+        % Handles first display
+        if loop.firstSpeedo
+           loop.firstTimer      = 2*scrn.frameRate;
+           speedo               = speedo.unlock(loop);
+           loop.firstSpeedo     = false;
+           
+        end
+        
+        if loop.firstTimer == 0
+           speedo               = speedo.relock(loop); 
+        end
         
         %% %%%%%%%%%%%%%%%%%%%
         %%% Drawing road and centrelines
