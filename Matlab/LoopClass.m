@@ -10,6 +10,7 @@ classdef LoopClass
         currentFrame                                    % What the current frame is
         roadLeft
         speedUpLeft
+        lengthShown
         
         % Timers
         eventOverTimer                                  % Timer counting down from when an event finishes
@@ -89,6 +90,7 @@ classdef LoopClass
             loop.speedUpLeft        = loop.speedUpMaxFrames;
             loop.nFramShown         = 0;
             loop.nFramesSlowing     = 0;
+            loop.lengthShown        = 0;
 
             % Flags
             loop.overtakeFlag      	= false;
@@ -225,6 +227,11 @@ classdef LoopClass
             
         end
         
+        function loop = setEventOver(loop)
+           loop.eventOverFlag = true;
+           loop.hitMinSpeedFlag = false;
+        end
+        
         function loop = startOvertake(loop, scrn)
             loop.overtakeFlag           = true;
             loop.overtakeTimer          = scrn.frameRate*3;
@@ -269,7 +276,6 @@ classdef LoopClass
         
         function loop = startSlowDown(loop)
             loop.slowingDownFlag = true;
-%             loop.nFramShown = 0;
         end
         
         function loop = slowDown(loop, cyclist, speedo, camera, scrn, emg)
@@ -308,6 +314,7 @@ classdef LoopClass
             elseif ~loop.oneVis
                 loop.nFramesSlowing = 0;
                 loop.slowingDownFlag = false;
+                loop.lengthShown = 0;
             end
 
             if loop.cameraVCurrent <= minSpeed
@@ -315,6 +322,7 @@ classdef LoopClass
                 loop.cameraVCurrent = minSpeed;
                 loop.slowingDownFlag = false;
                 loop.nFramesSlowing = 0;
+                loop.lengthShown = 0;
 
             end
 

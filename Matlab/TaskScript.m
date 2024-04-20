@@ -192,7 +192,7 @@ while test.trials > 0
         try
             
             if or(loop.whichType ~= loop.whichTypeStore(end-1), loop.whichInstance ~= loop.whichInstanceStore(end-1))
-                loop.nFramShown = 0;
+                loop.lengthShown = 0;
             end
             
         catch
@@ -209,9 +209,6 @@ while test.trials > 0
         % Flipping to the screen
         Screen('EndOpenGL', scrn.win);
         Screen('Flip', scrn.win);
-        
-        disp('%%%%%%%%%%%');
-        disp(loop.nFramShown);
         
 
         %% %%%%%%%%%%%%%%%%%%%
@@ -244,7 +241,6 @@ while test.trials > 0
         %%% Handling Loop Processes
         loop = loop.endOfFrameWrapUp(toc, noise);
         Screen('BeginOpenGL', scrn.win);
-        display(loop.nFramShown);
     
     end
 

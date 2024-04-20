@@ -29,7 +29,6 @@ function loop = getKeyMakeChange(loop, speedo, cyclist, keys, test, camera, scrn
     
     % Will close the loop if returned true, defaults to false
     loop.breakFlag = false;
-    loop.hitMinSpeedFlag = false;
     
     % Opens an all zero array to record which keys
     keyBinary = zeros(1, 6);

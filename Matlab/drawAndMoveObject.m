@@ -83,7 +83,7 @@ function [object, loop, test, objectY] = drawAndMoveObject(object, loop, test, t
 
                 object.stimOn(stimInt) = false;                                 % Turn the object off
                 if or(type == 1, type == 2)
-                    loop.eventOverFlag = true;
+                    loop = loop.setEventOver();
 
                     % DEBUG
                     disp(typeNames(type) + " No " + num2str(stimInt) + " Has reached the end of the track")
@@ -105,15 +105,15 @@ function [object, loop, test, objectY] = drawAndMoveObject(object, loop, test, t
                     if and(object.y(stimInt) <= object.potentialEnd, object.y(stimInt) <= start) 	% If the current instance is close enough to 'disappear'
 
                         if loop.hitMinSpeedFlag
-                            loop.nFramShown = loop.nFramShown + 1;
+                            loop.lengthShown = loop.lengthShown + 1;
                         end
                         
                         
                         % If the object has been in front for more than nFramesTurn figure
-                        if and(loop.nFramShown>scrn.frameRate*2, loop.hitMinSpeedFlag)
-                            loop.nFramShown = 0;
+                        if and(loop.lengthShown>scrn.frameRate*2, loop.hitMinSpeedFlag)
+                            loop.lengthShown = 0;
                             object.stimOn(stimInt) = false;                                       	% Turn the instance off
-                            loop.eventOverFlag = true;                                              % Flag the event as having ended
+                            loop = loop.setEventOver();
 
                             % DEBUG
                             disp(typeNames(type) + " No " + num2str(stimInt) + " Has turned off")
