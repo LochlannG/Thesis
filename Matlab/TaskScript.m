@@ -22,7 +22,6 @@ cyclist                     = CyclistClass(road);
 cyclist                     = cyclist.getVertexes();
 
 % Setup Car objects
-
 towardsCar  = CarClass(road, "other");
 towardsCar  = towardsCar.setEndingVals(0);
 towardsCar  = towardsCar.getVertexes();
@@ -31,21 +30,22 @@ withCar     = withCar.setEndingVals(20);
 withCar     = withCar.getVertexes();
 
 % Calling remaining setup functions
-camera                      = setupCamera(towardsCar, road);                % Defining parameters - Camera
-noise                       = setupNoise(scrn);                             % Defining parameters - Noise
-keys                        = setupKeys();                                  % Defining parameters - Keys
-loop                        = LoopClass(scrn);                              % Defining parameters - Loop
+camera   	= setupCamera(towardsCar, road);                % Defining parameters - Camera
+noise      	= setupNoise(scrn);                             % Defining parameters - Noise
+keys       	= setupKeys();                                  % Defining parameters - Keys
+loop      	= LoopClass(scrn);                              % Defining parameters - Loop
 
 % Setup Speedometer
-speedo = SpeedoClass(0.2, 1);
-needle = SpeedoClass(0.1, 0.01);
-marker = SpeedoClass(0.1, 0.01);
-speedo = speedo.getVertexes([0, 0, 0]);
-needle = needle.getVertexes([1, 0, 0]);
-marker = marker.getVertexes([0.3, 0.3, 0.3]);
+speedo      = SpeedoClass(0.2, 1);
+needle      = SpeedoClass(0.1, 0.01);
+marker      = SpeedoClass(0.1, 0.01);
+speedo      = speedo.getVertexes([0, 0, 0]);
+needle      = needle.getVertexes([1, 0, 0]);
+marker      = marker.getVertexes([0.3, 0.3, 0.3]);
 
 % Create the results object
-results = ResultsClass(test);
+results     = ResultsClass(test);
+results     = results.recordXPositions(withCar, towardsCar, cyclist);
 
 
 %% %%%%%%%%%%%%%%%%%%%
@@ -194,6 +194,7 @@ while test.trials > 0
             if or(loop.whichType ~= loop.whichTypeStore(end-1), loop.whichInstance ~= loop.whichInstanceStore(end-1))
                 loop.nFramShown = 0;
             end
+            
         catch
             % do nothing
         end
@@ -208,6 +209,9 @@ while test.trials > 0
         % Flipping to the screen
         Screen('EndOpenGL', scrn.win);
         Screen('Flip', scrn.win);
+        
+        disp('%%%%%%%%%%%');
+        disp(loop.nFramShown);
         
 
         %% %%%%%%%%%%%%%%%%%%%
@@ -224,6 +228,10 @@ while test.trials > 0
             break;
         end
         
+        if loop.slowingDownFlag
+            loop = loop.slowDown(cyclist, speedo, camera, scrn, emg);
+        end
+        
         
         %% %%%%%%%%%%%%%%%%%%%
         %%% Wrap up at end of frame (This must happen after user response
@@ -236,6 +244,7 @@ while test.trials > 0
         %%% Handling Loop Processes
         loop = loop.endOfFrameWrapUp(toc, noise);
         Screen('BeginOpenGL', scrn.win);
+        display(loop.nFramShown);
     
     end
 
@@ -257,7 +266,7 @@ Screen('CloseAll');
 
 
 %% %%%%%%%%%%%%%%%%%%%
-%%% Plotting Summary Results
+%%% Saving and plotting results
 close all;
-results.saveResults();
-[results.bikeDist, results.carDist, results.car2Dist]   = results.plotGravityScoring(towardsCar, cyclist, withCar);
+% results.saveResults();
+% [results.bikeDist, results.carDist, results.car2Dist]   = results.plotGravityScoring();     

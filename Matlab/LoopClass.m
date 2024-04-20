@@ -21,14 +21,15 @@ classdef LoopClass
         % Flags
         escapeFlag
         overtakeFlag
+        overtakeOngoingFlag
         skipPlot
-        hitMinSpeed
         stopResponse
         eventOverFlag
         oneVis
         breakFlag
         hitMinSpeedFlag
         firstDisplay
+        slowingDownFlag
 
         % Variables
         cameraVCurrent
@@ -43,6 +44,8 @@ classdef LoopClass
         gap
         overtakeSpeed
         yNoise
+        overtakeCurrent
+        keysPressed
 
         % Semi Constants
         cameraStartX
@@ -60,6 +63,8 @@ classdef LoopClass
         withCarYStore
         cameraXStore
         yNoiseStore
+        overtakeStore
+        keysStore
         
     end
     properties (Constant)
@@ -67,11 +72,10 @@ classdef LoopClass
     end
     methods
         function loop = LoopClass(scrn)
-            loop.nFramShown = 2*scrn.frameRate;                 % stimulus will disappear if it has been in front for more than 2 seconds
-    
+            
             % Flags and counters
-            loop.escapeFlag = false;
-            loop.currentTrial = 1;
+            loop.escapeFlag         = false;
+            loop.currentTrial       = 1;
 
         end
 
@@ -84,12 +88,14 @@ classdef LoopClass
             loop.roadLeft           = test.lengthM;
             loop.speedUpLeft        = loop.speedUpMaxFrames;
             loop.nFramShown         = 0;
+            loop.nFramesSlowing     = 0;
 
             % Flags
             loop.overtakeFlag      	= false;
             loop.skipPlot           = false;
-            loop.hitMinSpeed        = false;
+            loop.hitMinSpeedFlag    = false;
             loop.stopResponse       = true;
+            loop.overtakeOngoingFlag    = false;
 
             % Variables
             loop.cameraVCurrent     = camera.startSpeed;
@@ -128,6 +134,8 @@ classdef LoopClass
             loop.towardsCarYStore   = [loop.towardsCarYStore,   loop.towardsCarYCurrent];
             loop.roadStore          = [loop.roadStore,          loop.roadLeft];
             loop.yNoiseStore        = [loop.yNoiseStore,        loop.yNoise];
+            loop.overtakeStore      = [loop.overtakeStore,      loop.overtakeCurrent];
+            loop.keysStore          = [loop.keysStore,          loop.keysPressed'];
             
         end
 
@@ -148,7 +156,7 @@ classdef LoopClass
         end
         
         function loop = resetTopFrameFlags(loop)
-            loop.eventOverFlag = false;
+            loop.eventOverFlag      = false;
             
         end
         
@@ -166,6 +174,12 @@ classdef LoopClass
             loop.currentFrame       = loop.currentFrame + 1;                                        % The tracker of current frame
             loop.timeStore          = [loop.timeStore toc];                                         % Update the time tracking values
             loop.yNoise             = noise.yNoise;
+            
+            if loop.overtakeFlag
+               loop.overtakeCurrent = 1;
+            else
+                loop.overtakeCurrent = 0;
+            end
         
         end
         
@@ -182,27 +196,27 @@ classdef LoopClass
             % Statements to handle when to change things
             if l.eventOverTimer == 0 % Handles when an event has occured
                 % Step 1 - Change noise level
-                l.firstDisplay = false;
-                l.overtakeFlag = false;
-                currentNoise = n.yNoise;
-                n.yNoise = getDiscreteViewDist(n.levels);
+                l.firstDisplay  = false;
+%                 l.overtakeFlag  = false;
+                currentNoise    = n.yNoise;
+                n.yNoise        = getDiscreteViewDist(n.levels);
 
-                n.vector = linspace(currentNoise, n.yNoise, n.maxIter);
-                n.iteration = 1;
+                n.vector        = linspace(currentNoise, n.yNoise, n.maxIter);
+                n.iteration     = 1;
                 
                 % Update the areas where the cyclist & with car are allowed disappear
-                c = c.setEndingVals(n.yNoise);
-                w.potentialEnd = n.yNoise;
+                c               = c.setEndingVals(n.yNoise);
+                w.potentialEnd  = n.yNoise;
 
             elseif l.allowResponseTimer == 0
 
                 % Step 2 - Turn Speedometer Green & allow a response
-                s = s.unlock(l);
-                l.stopResponse = false;
+                s               = s.unlock(l);
+                l.stopResponse  = false;
                 
             elseif l.endResponseTimer == 0
-                s = s.relock(l);
-                l.stopResponse = true;
+                s               = s.relock(l);
+                l.stopResponse  = true;
             end
             
             % Get the users key input
@@ -212,9 +226,10 @@ classdef LoopClass
         end
         
         function loop = startOvertake(loop, scrn)
-            loop.overtakeFlag = true;
-            loop.overtakeTimer = scrn.frameRate*3;
-            loop.overtakeSpeed = loop.cameraVCurrent;
+            loop.overtakeFlag           = true;
+            loop.overtakeTimer          = scrn.frameRate*3;
+            loop.overtakeSpeed          = loop.cameraVCurrent;
+            loop.overtakeOngoingFlag    = true;
         end
 
         function [loop, camera] = overtakeHandling(loop, camera, scrn)
@@ -241,15 +256,72 @@ classdef LoopClass
                     end
 
                 elseif loop.overtakeTimer == 0
-                    camera.xyz(1) = loop.cameraStartX;
-                    loop.overtakeFlag = false;
-                    
+                    camera.xyz(1)               = loop.cameraStartX;
+                    loop.overtakeFlag           = false;
+                    loop.overtakeOngoingFlag    = false;
                 end
                 
                 loop.cameraXStore = [loop.cameraXStore, camera.xyz(1)];  % Stores the x position of the camera
                 gluLookAt(camera.xyz(1), camera.xyz(2), camera.xyz(3), camera.fixPoint(1), camera.fixPoint(2), camera.fixPoint(3), camera.upVec(1), camera.upVec(2), camera.upVec(3));
 
             end
+        end
+        
+        function loop = startSlowDown(loop)
+            loop.slowingDownFlag = true;
+%             loop.nFramShown = 0;
+        end
+        
+        function loop = slowDown(loop, cyclist, speedo, camera, scrn, emg)
+            
+            if loop.nFramesSlowing == 0
+                loop.nFramesSlowing = 1;
+                if emg ~= 0
+                    emg.onMarker();
+                end
+            end
+
+
+            % Defining a minimum value for speed, I love getting a chance
+            % to use switch - case statements they are very fancy
+            if any(strcmp(fieldnames(loop), 'whichType'))
+                switch loop.whichType
+                    case 1
+                         minSpeed = cyclist.speed(loop.whichInstance(1));
+                    otherwise
+                        minSpeed = min(cyclist.speed);
+                end
+            else
+                minSpeed = min(cyclist.speed);
+            end
+
+            if speedo.unlocked % if an event has passed
+
+                loop.cameraVCurrent = loop.cameraVCurrent - camera.discreteAcceleration;
+
+            elseif loop.oneVis      % if something isn't visible you can't slow down
+
+                % When the trial screen is in place
+                loop.cameraVCurrent = loop.cameraVCurrent - (loop.nFramesSlowing)*camera.slopeOfAccFun*(1/scrn.frameRate);
+                loop.nFramesSlowing = loop.nFramesSlowing + 1;
+
+            elseif ~loop.oneVis
+                loop.nFramesSlowing = 0;
+                loop.slowingDownFlag = false;
+            end
+
+            if loop.cameraVCurrent <= minSpeed
+                loop.hitMinSpeedFlag = true;
+                loop.cameraVCurrent = minSpeed;
+                loop.slowingDownFlag = false;
+                loop.nFramesSlowing = 0;
+
+            end
+
+            if loop.cameraVCurrent <= 0
+                loop.cameraVCurrent = 0;
+            end
+
         end
         
     end

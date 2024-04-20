@@ -100,19 +100,20 @@ function [object, loop, test, objectY] = drawAndMoveObject(object, loop, test, t
             % bikes/cars turning off the road after you slow down behind them)
             % This can only happen with objects tagged as type = [1, 2] as they
             % are the ones in the camera's lane
-            if or(type == 1, type == 2)                                             % If one of the correct types
-                if and(loop.whichType == type, loop.whichInstance(type) == stimInt) % If this instance of this object is in front
-                    if object.y(stimInt) < object.potentialEnd                      % If the current instance is close enough to 'disappear'
+            if or(type == 1, type == 2)                                                             % If one of the correct types
+                if and(loop.whichType == type, loop.whichInstance(type) == stimInt)                 % If this instance of this object is in front
+                    if and(object.y(stimInt) <= object.potentialEnd, object.y(stimInt) <= start) 	% If the current instance is close enough to 'disappear'
 
                         if loop.hitMinSpeedFlag
                             loop.nFramShown = loop.nFramShown + 1;
                         end
-
+                        
+                        
                         % If the object has been in front for more than nFramesTurn figure
                         if and(loop.nFramShown>scrn.frameRate*2, loop.hitMinSpeedFlag)
                             loop.nFramShown = 0;
-                            object.stimOn(stimInt) = false;                         % Turn the instance off
-                            loop.eventOverFlag = true;                              % Flag the event as having ended
+                            object.stimOn(stimInt) = false;                                       	% Turn the instance off
+                            loop.eventOverFlag = true;                                              % Flag the event as having ended
 
                             % DEBUG
                             disp(typeNames(type) + " No " + num2str(stimInt) + " Has turned off")

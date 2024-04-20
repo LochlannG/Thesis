@@ -13,10 +13,20 @@ classdef ResultsClass
         time
         road
         
+        % X positions of objects
+        bikeX
+        towardsCarX
+        withCarX
+        
         % Y positions of objects
         bikeY
         towardsCarY
         withCarY
+        
+        % Binary user choice recordings
+%         overtakeButton
+%         slowdownButton
+        buttonsPressed
         
         % Camera Variables
         cameraX
@@ -53,6 +63,17 @@ classdef ResultsClass
             results.saved           = false;
             
         end
+        
+        function results = recordXPositions(results, withCar, towardsCar, cyclist)
+            % Records x positions of objects at the top of a script
+            
+            % X positions of objects
+            results.bikeX       = cyclist.x;
+            results.towardsCarX = towardsCar.x;
+            results.withCarX    = withCar.x;
+
+            
+        end
 
         function results = updateResults(results, loop)
         % Current
@@ -60,7 +81,7 @@ classdef ResultsClass
             % Some of the task variables in the current loop
             results.time{loop.currentTrial}             = loop.timeStore;           % Records the frame times
             results.road{loop.currentTrial}             = loop.roadStore;           % Records the road left at each frame
-
+            
             % Y positions
             results.bikeY{loop.currentTrial}            = loop.bikeYStore;          % Records the y position of the bikes
             results.towardsCarY{loop.currentTrial}      = loop.towardsCarYStore;    % Records the y position of the oncoming cars
@@ -75,9 +96,13 @@ classdef ResultsClass
             results.whatFirst{loop.currentTrial}        = loop.whichTypeStore;      % Records what type of object is first in your lane
             results.whichFirst{loop.currentTrial}       = loop.whichInstanceStore;  % Records which instance of that object is first in your lane
             results.gap{loop.currentTrial}              = loop.gapStore;            % Records the gaps in the right lane
+            
+            % User choice recording
+%             results.overtakeButton                      = loop.overtakeStore;       % Records when the user presses the overtake button
+            results.buttonsPressed{loop.currentTrial}   = loop.keysStore;
         end
         
-        function [bikeDist, towardsCarDist, withCarDist] = plotGravityScoring(results, towardsCar, cyclist, withCar)
+        function [bikeDist, towardsCarDist, withCarDist] = plotGravityScoring(results)
             % Plots the 'gravity' scores
 
             for i = 1:length(results.bikeY)
@@ -91,21 +116,21 @@ classdef ResultsClass
 
                 % Distances to oncoming cars
                 for j = 1:height(results.towardsCarY{i})
-                    towardsCarDist{i}(j, :) = sqrt((results.towardsCarY{i}(j, :) - 0).^2 + (towardsCar.x - results.cameraX{i}).^2);
+                    towardsCarDist{i}(j, :) = sqrt((results.towardsCarY{i}(j, :) - 0).^2 + (results.towardsCarX - results.cameraX{i}).^2);
                     towardsCarGrav{i}(j, :) = 1./towardsCarDist{i}(j, :).^2;
                     plot(towardsCarGrav{i}, 'color', 'r');
                 end
 
                 % Distances to bikes
                 for j = 1:height(results.bikeY{i})
-                    bikeDist{i}(j, :) = sqrt((results.bikeY{i}(j, :) - 0).^2 + (cyclist.x - results.cameraX{i}).^2);
+                    bikeDist{i}(j, :) = sqrt((results.bikeY{i}(j, :) - 0).^2 + (results.bikeX - results.cameraX{i}).^2);
                     bikeGrav{i}(j, :) = 1./bikeDist{i}(j, :).^2;
                     plot(bikeGrav{i}, 'color', 'g')
                 end
 
                 % Distances to in flow cars
                 for j = 1:height(results.withCarY{i})
-                    withCarDist{i}(j, :) = sqrt((results.withCarY{i}(j, :) - 0).^2 + (withCar.x - results.cameraX{i}).^2);
+                    withCarDist{i}(j, :) = sqrt((results.withCarY{i}(j, :) - 0).^2 + (results.withCarX - results.cameraX{i}).^2);
                     withCarGrav{i}(j, :) = 1./withCarDist{i}(j, :).^2;
                     plot(withCarGrav{i}(j, :), 'color', 'b')
                 end
@@ -133,10 +158,11 @@ classdef ResultsClass
                 % Bike Position / View Distance Plot
                 nexttile
                 hold on
-                plot(frameVector, results.bikeY{i}')
-                plot(frameVector, results.cameraView{i}(frameVector), '--');
+                plot(frameVector, results.bikeY{i}', 'color', 'g')
+                plot(frameVector, results.withCarY{i}', 'color', 'b')
+                plot(frameVector(1:end-1), results.cameraView{i}(frameVector(1:end-1)), '--');
                 xlim([0 length(frameVector)])
-                ylim([0, round(max(max(results.cameraView{i}(frameVector))))])
+                ylim([0, round(max(max(results.cameraView{i}(frameVector(1:end-1)))))])
                 title("Bike Distance Remaining")
                 ylabel("Distance (m)")
                 hold off
@@ -150,8 +176,18 @@ classdef ResultsClass
                 ylabel("Speed (m/s)")
                 hold off
 
-                % Frame Timing Plots
+                % Button Presses
                 nexttile
+                buttons = results.buttonsPressed{i};
+                for j = 1:height(buttons)
+                   buttons(j, :) = buttons(j, :) + j; 
+                end
+                plot(buttons')
+                set(gca,'YTick',[])
+                ylim([0 7])
+                
+                % Frame Timing Plots
+                figure;
                 frameTimesMS = results.time{i}*1000;
                 hold on
                 plot(frameVector, frameTimesMS)
