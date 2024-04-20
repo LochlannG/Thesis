@@ -276,5 +276,5 @@ Screen('CloseAll');
 %% %%%%%%%%%%%%%%%%%%%
 %%% Saving and plotting results
 close all;
-% results.saveResults();
+results.saveResults();
 % [results.bikeDist, results.carDist, results.car2Dist]   = results.plotGravityScoring();     
