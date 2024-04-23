@@ -33,7 +33,7 @@ withCar     = withCar.getVertexes();
 camera   	= setupCamera(towardsCar, road);                % Defining parameters - Camera
 noise      	= setupNoise(scrn);                             % Defining parameters - Noise
 keys       	= setupKeys();                                  % Defining parameters - Keys
-loop      	= LoopClass(scrn);                              % Defining parameters - Loop
+loop      	= LoopClass(camera);                            % Defining parameters - Loop
 
 % Setup Speedometer
 speedo      = SpeedoClass(0.2, 1);
@@ -44,7 +44,7 @@ needle      = needle.getVertexes([1, 0, 0]);
 marker      = marker.getVertexes([0.3, 0.3, 0.3]);
 
 % Create the results object
-results     = ResultsClass(test);
+results     = ResultsClass(test, scrn);
 results     = results.recordXPositions(withCar, towardsCar, cyclist);
 
 
@@ -138,8 +138,6 @@ while test.trials > 0
                 loop.stopResponse = true;
             end
         end
-
-%         gluPerspective(70, 1/scrn.ar, 0.1, noise.yNoise);
     
         % Handles camera positioning & fixation
         % gluLookAt() is the function responsible for camera positioning in OpenGL
@@ -252,11 +250,14 @@ while test.trials > 0
         %% %%%%%%%%%%%%%%%%%%%
         %%% Handling Loop Processes
         loop = loop.endOfFrameWrapUp(toc, noise);
+        cyclist = cyclist.handleMessup();
+        withCar = withCar.handleMessup();
         Screen('BeginOpenGL', scrn.win);
     
     end
 
     % records results of the current trial stored into a cell structure
+    results = results.recordBikeStarts(loop, cyclist);
     results = results.updateResults(loop);
 
     % updates the loop value

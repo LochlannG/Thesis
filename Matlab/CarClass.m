@@ -8,7 +8,7 @@ classdef CarClass
         stimStartM
         stimCurrent
         stimOn
-        stimApp
+        stimGone                    % The stimulus has disappeared
         which
 
         % OpenGL values
@@ -64,12 +64,17 @@ classdef CarClass
             car.stimCurrent  = 1;
             car.y            = ones(car.n, 1)*car.start;
             car.stimOn       = false(car.n, 1);
-            car.stimApp      = false(car.n, 1);
+            car.stimGone     = false(car.n, 1);
 
         end
 
         function car = setSpeed(car, givenSpeed)
             car.speed = givenSpeed;
+        end
+        
+        function car = handleMessup(car)
+            messups = and(car.stimOn, car.stimGone);
+            car.stimOn(messups) = false;
         end
     end
 end

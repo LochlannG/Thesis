@@ -2,12 +2,13 @@ classdef ResultsClass
     % ResultsClass Class containing the various properties and functions used to handle the results storage and plotting
     
     properties
-        % Identifying the subject
+        % Identifying the subject & test type
         subjectCode
         nTrials
         recordEEG
         recordEMG
         lengthM
+        givenFrameRT
         
         % Individual Trial Variables
         time
@@ -23,9 +24,10 @@ classdef ResultsClass
         towardsCarY
         withCarY
         
+        % Bike Start Levels
+        bikeStartLevels
+        
         % Binary user choice recordings
-%         overtakeButton
-%         slowdownButton
         buttonsPressed
         
         % Camera Variables
@@ -53,13 +55,14 @@ classdef ResultsClass
     end
     
     methods
-        function results = ResultsClass(test)
+        function results = ResultsClass(test, scrn)
             %ResultsClass Construct an instance of this class
             results.subjectCode     = test.subjectCode;
             results.nTrials         = test.trials;
             results.recordEEG       = test.recordEEG;
             results.recordEMG       = test.recordEMG;
             results.lengthM         = test.lengthM;
+            results.givenFrameRT    = scrn.frameRate;
             results.saved           = false;
             
         end
@@ -72,6 +75,12 @@ classdef ResultsClass
             results.towardsCarX = towardsCar.x;
             results.withCarX    = withCar.x;
 
+            
+        end
+        
+        function results = recordBikeStarts(results, loop, cyclist)
+           
+            results.bikeStartLevels{loop.currentTrial}  = cyclist.start;
             
         end
 
@@ -98,7 +107,6 @@ classdef ResultsClass
             results.gap{loop.currentTrial}              = loop.gapStore;            % Records the gaps in the right lane
             
             % User choice recording
-%             results.overtakeButton                      = loop.overtakeStore;       % Records when the user presses the overtake button
             results.buttonsPressed{loop.currentTrial}   = loop.keysStore;
         end
         
@@ -147,7 +155,7 @@ classdef ResultsClass
 
         end
         
-        function results = plotTrialSummary(results)
+        function results = plotTrialSummary(results, frameRTplot)
             
             for i = 1:results.nTrials
 
@@ -182,21 +190,23 @@ classdef ResultsClass
                 for j = 1:height(buttons)
                    buttons(j, :) = buttons(j, :) + j; 
                 end
-                plot(buttons')
+                plot(frameVector(1:end-1), buttons')
                 set(gca,'YTick',[])
                 ylim([0 7])
                 
                 % Frame Timing Plots
-                figure;
-                frameTimesMS = results.time{i}*1000;
-                hold on
-                plot(frameVector, frameTimesMS)
-                yline(mean(frameTimesMS))
-                xlim([0 length(frameVector)])
-                text(max(frameVector), mean(frameTimesMS), " Mean = "+mean(frameTimesMS)+"ms")
-                title("Frame time")
-                hold off
-                xlabel("Frame")
+                if frameRTplot
+                    figure;
+                    frameTimesMS = results.time{i}*1000;
+                    hold on
+                    plot(frameVector, frameTimesMS)
+                    yline(mean(frameTimesMS))
+                    xlim([0 length(frameVector)])
+                    text(max(frameVector), mean(frameTimesMS), " Mean = "+mean(frameTimesMS)+"ms")
+                    title("Frame time")
+                    hold off
+                    xlabel("Frame")
+                end
 
                 results.averageFrameRate{i} = 1/mean(frameTimesMS);
             
@@ -207,7 +217,7 @@ classdef ResultsClass
         function results = saveResults(results)
             % Save results
             
-            filename = string([results.subjectCode, '.mat']);
+            filename = string(['results/', results.subjectCode, '.mat']);
             save(filename, 'results');
             results.saved = true;
         end

@@ -73,11 +73,12 @@ classdef LoopClass
         
     end
     methods
-        function loop = LoopClass(scrn)
+        function loop = LoopClass(camera)
             
             % Flags and counters
             loop.escapeFlag         = false;
             loop.currentTrial       = 1;
+            loop.cameraStartX       = camera.xyz(1);
 
         end
 
@@ -107,7 +108,6 @@ classdef LoopClass
             loop.whichInstance = 0;
 
             % Constants
-            loop.cameraStartX       = camera.xyz(1);
             loop.speedUpMaxFrames   = round(scrn.frameRate*2, 0);     % You're allowed speed up for 2 seconds following a stimulus
 
             % Storage
@@ -122,6 +122,8 @@ classdef LoopClass
             loop.withCarYStore      = [];
             loop.cameraXStore       = [];
             loop.yNoiseStore        = [];
+            loop.overtakeStore      = [];
+            loop.keyStore           = [];
             
             % Change other object values
             speedo = speedo.relock(loop);
