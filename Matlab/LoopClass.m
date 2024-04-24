@@ -123,7 +123,7 @@ classdef LoopClass
             loop.cameraXStore       = [];
             loop.yNoiseStore        = [];
             loop.overtakeStore      = [];
-            loop.keyStore           = [];
+            loop.keysStore          = [];
             
             % Change other object values
             speedo = speedo.relock(loop);
@@ -242,6 +242,7 @@ classdef LoopClass
             loop.overtakeTimer          = scrn.frameRate*3;
             loop.overtakeSpeed          = loop.cameraVCurrent;
             loop.overtakeOngoingFlag    = true;
+
         end
 
         function [loop, camera] = overtakeHandling(loop, camera, scrn)
@@ -287,8 +288,8 @@ classdef LoopClass
             
             if loop.nFramesSlowing == 0
                 loop.nFramesSlowing = 1;
-                if emg ~= 0
-                    emg.onMarker();
+                if ~isempty(emg) && ~speedo.unlocked
+                    emg.smlTaskMarker();
                 end
             end
 

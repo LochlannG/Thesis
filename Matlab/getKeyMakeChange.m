@@ -79,8 +79,8 @@ function loop = getKeyMakeChange(loop, speedo, cyclist, keys, test, camera, scrn
         end
         
         % Calls slowdown handling function
-%         loop = loop.slowDown(test, cyclist, speedo, camera, scrn, emg);
         loop = loop.startSlowDown();
+
 
     end
     
@@ -110,7 +110,7 @@ function loop = getKeyMakeChange(loop, speedo, cyclist, keys, test, camera, scrn
         keyBinary(6) = 1; 
         
         % ping EMG
-        if emg ~= 0
+        if test.recordEMG ~= 0
             emg.smlTaskMarker();
         end
 

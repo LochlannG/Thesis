@@ -26,9 +26,9 @@ classdef EMGtriggers
         
         function smlTaskMarker(emg)
             io64(emg.ioObj,emg.address,0);
-            WaitSecs(0.1)
+            WaitSecs(0.01)
             io64(emg.ioObj,emg.address,1);
-            WaitSecs(0.1)
+            WaitSecs(0.01)
             io64(emg.ioObj,emg.address,0);
         end
 

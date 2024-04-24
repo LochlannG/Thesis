@@ -50,8 +50,11 @@ results     = results.recordXPositions(withCar, towardsCar, cyclist);
 
 %% %%%%%%%%%%%%%%%%%%%
 %%% Handling pinging the EMG software
-% emg = EMGtriggers(hex2dec('4FF8'));
-emg = 0;
+if test.recordEMG ~= 0
+    emg = EMGtriggers(hex2dec('4FF8'));
+else
+    emg = 0;
+end
 
 %% %%%%%%%%%%%%%%%%%%%
 %%% Main trial loop
@@ -61,7 +64,9 @@ while test.trials > 0
     
     %% %%%%%%%%%%%%%%%%%%%
     % Ping the software to say the trial has begun
-    % emg.bigTaskMarker();
+    if test.recordEMG ~= 0
+        emg.bigTaskMarker();
+    end
 
     
     %% %%%%%%%%%%%%%%%%%%%
