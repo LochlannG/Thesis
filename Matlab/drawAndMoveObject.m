@@ -29,21 +29,21 @@ function [object, loop, test, objectY] = drawAndMoveObject(object, loop, test, t
     % reaches the correct frame.
     if object.n > 0                                                         % If there are any instances of this object
         if object.stimStartM(object.stimCurrent) >= loop.roadLeft           % If the camera is at/has passed the point where this object should begin
-            
-            % Switch the object on
-            object.stimOn(object.stimCurrent) = true;                       
+            if ~object.stimGone(object.stimCurrent)
+                % Switch the object on
+                object.stimOn(object.stimCurrent) = true;                       
 
-            % If there are more instances yet to draw -> iterate the
-            % counter
-            if object.stimCurrent < length(object.stimStartM)
-                object.stimCurrent = object.stimCurrent + 1; 
+                % If there are more instances yet to draw -> iterate the
+                % counter
+                if object.stimCurrent < length(object.stimStartM)
+                    object.stimCurrent = object.stimCurrent + 1; 
+                end
+
+                % Print message if in debug mode
+                if test.debug == 1
+                    disp("Oncoming car begun at frame = " + loop.currentFrame);
+                end
             end
-
-            % Print message if in debug mode
-            if test.debug == 1
-                disp("Oncoming car begun at frame = " + loop.currentFrame);
-            end
-
         end
     end
 
@@ -56,10 +56,11 @@ function [object, loop, test, objectY] = drawAndMoveObject(object, loop, test, t
     else
         for i = 1:length(stimArray)
             stimInt = stimArray(i);
+            stimHasDisappeared = object.stimGone(stimInt);
 
             if isempty(stimInt)
                 % Do nothing if the vector is empty
-            else
+            elseif ~stimHasDisappeared
                 % Finds what type of object we are working on and takes out
                 % the appropriate 'step' which is the distance travelled by
                 % that object in a frame
@@ -87,10 +88,11 @@ function [object, loop, test, objectY] = drawAndMoveObject(object, loop, test, t
                 if object.y(stimInt) < dist2StopDrawing && object.y(stimInt) >= dist2StopDrawing - step
 
 
-                    object.stimOn(stimInt) = false;                                 % Turn the object off
+                    object.stimOn(stimInt)      = false;                                 % Turn the object off
+                    object.stimGone(stimInt)    = true;
                     if or(type == 1, type == 2)
                         loop = loop.setEventOver();
-
+                        
                         % DEBUG
                         disp(typeNames(type) + " No " + num2str(stimInt) + " Has reached the end of the track")
 
@@ -118,7 +120,8 @@ function [object, loop, test, objectY] = drawAndMoveObject(object, loop, test, t
                             % If the object has been in front for more than nFramesTurn figure
                             if and(loop.lengthShown>scrn.frameRate*2, loop.hitMinSpeedFlag)
                                 loop.lengthShown = 0;
-                                object.stimOn(stimInt) = false;                                       	% Turn the instance off
+                                object.stimOn(stimInt)      = false;                                       	% Turn the instance off
+                                object.stimGone(stimInt)    = true;
                                 loop = loop.setEventOver();
 
                                 % DEBUG

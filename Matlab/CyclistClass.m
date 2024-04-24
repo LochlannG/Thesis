@@ -11,7 +11,7 @@ classdef CyclistClass
         speed
         start
         stimOn
-        stimApp
+        stimGone
         stimCurrent
 
         % OpenGL Values
@@ -59,12 +59,17 @@ classdef CyclistClass
             cyclist.start           = getCyclistStartPos(cyclist.n);
             cyclist.y               = ones(cyclist.n, 1)*100;%.*cyclist.start';
             cyclist.stimOn          = false(cyclist.n, 1);
-            cyclist.stimApp         = false(cyclist.n, 1);
+            cyclist.stimGone        = false(cyclist.n, 1);
             cyclist.stimCurrent     = 1;
         end
 
         function cyclist = setEndingVals(cyclist, givenEnd)
             cyclist.potentialEnd = givenEnd;
+        end
+        
+        function cyclist = handleMessup(cyclist)
+            messups = and(cyclist.stimOn, cyclist.stimGone);
+            cyclist.stimOn(messups) = false;
         end
     end
 end
