@@ -5,7 +5,7 @@ function test = setupTest()
     prompt              = {'Enter subject code:', 'nTrials:', 'Trials Distance (m):','EMG:'};
     dlgtitle            = 'Input';
     fieldsize           = [1 45; 1 45; 1 45; 1 45];
-    definput            = {'a','10', '2000', '0'};
+    definput            = {'test','10', '2000', '1'};
     answer              = inputdlg(prompt, dlgtitle, fieldsize, definput);
     
     % Variables to get about the subject & the test

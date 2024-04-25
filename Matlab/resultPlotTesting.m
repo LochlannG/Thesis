@@ -1,7 +1,7 @@
 % results stuff
 clc; close all
 figure
-tiledlayout(2, 1)
+t = tiledlayout(ceil(results.nTrials/3), 3);
 
 results.givenFrameRT = 60;
 
@@ -19,7 +19,7 @@ if length(results.buttonsPressed{2}) > length(results.time{2})
     end
 end
 
-for i = 1:2
+for i = 1:results.nTrials
     
     overtakePressed = buttons{i}(6, :);
     [overtakePressed2, ~] = envelope(overtakePressed, overtakeLasts);
@@ -81,12 +81,15 @@ for i = 1:2
     plot(frameVectorShort, seenCar{i}-1, 'b', 'linewidth', 3)
     xlim([0 length(frameVector)])
     ylim([0, round(max(max(results.cameraView{i}(frameVector(1:end-1)))))])
-    title("Bike Distance Remaining")
-    ylabel("Distance (m)")
+    title(['Trial # ', num2str(i)])
     hold off
-
 end
 
+title(t, "Position Summary")
+xlabel(t, "Frame")
+ylabel(t, "Distance (m)")
+
+% Bike on/off
 figure;
 hold on
 plot(diff(anyBike{i}), 'r')
@@ -94,17 +97,26 @@ plot(anyBike{i}, 'g')
 plot(diff(anyCar{i}), 'r')
 plot(anyCar{i}, 'b')
 
+% Overtake presses & Speed
 figure;
 hold on
 plot(overtakePressed)
 plot(results.cameraV{i})
+
+% View Distances
 countViewDistances(results)
+
 function countViewDistances(results)
-    
+    figure
+    t = tiledlayout(ceil(results.nTrials/3), 3);
+    title(t, "Position Summary")
+    xlabel(t, "Frame")
+
     for i = 1:results.nTrials
+        nexttile
         view = results.cameraView{i};
-        figure
         plot(diff(view))
+        title(['Trial # ', num2str(i)])
         
     end
 
