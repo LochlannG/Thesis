@@ -1,7 +1,7 @@
 % results stuff
 clc; close all
 figure
-tiledlayout(results.nTrials, 1)
+tiledlayout(2, 1)
 
 results.givenFrameRT = 60;
 
@@ -19,7 +19,7 @@ if length(results.buttonsPressed{2}) > length(results.time{2})
     end
 end
 
-for i = 1:results.nTrials
+for i = 1:2
     
     overtakePressed = buttons{i}(6, :);
     [overtakePressed2, ~] = envelope(overtakePressed, overtakeLasts);
