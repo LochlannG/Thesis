@@ -95,7 +95,7 @@ ylabel(t, "Distance (m)")
 % Reaction time plotting
 figure
 clc
-close all
+% close all
 clear indexesVisible
 indexesRecorded = [];
 
@@ -124,18 +124,18 @@ for i = 1:results.nTrials
     
 end
 
-partialViewDist = []
-for i = 1:length(indexesRecorded)
-   currentTrial = indexesRecorded(i, 1);
-   startIndex = indexesRecorded(i, 2);
-   endIndex = indexesRecorded(i, 3);
-   
-   if isnan(startIndex)
-       % Do nothing
-   else
-       partialViewDist = [partialViewDist; unique(results.cameraView{currentTrial}(startIndex:endIndex))];
-   end
-end
+% partialViewDist = []
+% for i = 1:length(indexesRecorded)
+%    currentTrial = indexesRecorded(i, 1);
+%    startIndex = indexesRecorded(i, 2);
+%    endIndex = indexesRecorded(i, 3);
+%    
+%    if isnan(startIndex)
+%        % Do nothing
+%    else
+%        partialViewDist = [partialViewDist; unique(results.cameraView{currentTrial}(startIndex:endIndex))];
+%    end
+% end
 
 %%
 
