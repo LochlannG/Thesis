@@ -17,6 +17,8 @@ if length(results.buttonsPressed{2}) > length(results.time{2})
         lengths(i) = length(results.buttonsPressed{i});
         buttons{i} = results.buttonsPressed{i}(:, lengths(i-1):lengths(i));
     end
+else
+   buttons = results.buttonsPressed; 
 end
 
 for i = 1:results.nTrials
@@ -85,9 +87,57 @@ for i = 1:results.nTrials
     hold off
 end
 
+
 title(t, "Position Summary")
 xlabel(t, "Frame")
 ylabel(t, "Distance (m)")
+%%
+% Reaction time plotting
+figure
+clc
+close all
+clear indexesVisible
+indexesRecorded = [];
+
+for i = 1:results.nTrials
+    currentBikes = seenBike{i};
+    nBikes(i) = height(currentBikes);
+    
+    % Loop through all the bikes in the trial
+    for j = 1:nBikes(i)
+        
+        % Find when the objects are visible
+        try
+            indexesVisible(2) = find(currentBikes(j, :), 1, 'first');
+            indexesVisible(3) = find(currentBikes(j, :), 1, 'last');
+        catch
+            disp(["Trial # " num2str(i) " Stimulus # " num2str(j) " empty"])
+            indexesVisible(2:3) = nan(1, 2);
+        end
+        
+        indexesVisible(1) = i;
+        
+        % Append to variables
+        indexesRecorded = [indexesRecorded; indexesVisible];
+        
+    end
+    
+end
+
+partialViewDist = []
+for i = 1:length(indexesRecorded)
+   currentTrial = indexesRecorded(i, 1);
+   startIndex = indexesRecorded(i, 2);
+   endIndex = indexesRecorded(i, 3);
+   
+   if isnan(startIndex)
+       % Do nothing
+   else
+       partialViewDist = [partialViewDist; unique(results.cameraView{currentTrial}(startIndex:endIndex))];
+   end
+end
+
+%%
 
 % Bike on/off
 figure;
