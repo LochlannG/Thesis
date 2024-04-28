@@ -25,6 +25,8 @@ The crux of this thesis was to fit driving to this paradigm; how can the complex
 Psychtoolbox is a software created to form a bridge between MATLAB and computer display hardware \cite{kleinerWhatNewPsychtoolbox32007}. It allows incredibly control over every pixel on the screen in a precisely timed frame by frame fashion. It is the standard software used within not just the cognitive neural systems lab in UCD but also throughout decision neuroscience research around the world. Furthermore, it builds upon the MATLAB workspace, familiar to UCD engineering students due to extensive use in the undergraduate engineering course.
 
 % Early experimentation, trying to adapt anna's code
+% Working with decision neuroscience models, trying to fit Kelly & O'Connell 2013 to a 
+At the beginning of the work package it was deemed appropriate that some experience be gained with the Psychtoolbox environment by adapting the model created in \citet{geuzebroekBalancingTrueFalse2023} to the data in \citet{kellyInternalExternalInfluences2013}. This was based on two key assumptions. The first being that the data which was gathered during the latter was similar to that which was expected following the construction of this task. The second being that having experience not only with the general format of the data outputted by the cognitive neuroscience lab but also the structure of the modelling apparatus used.
 
 
 % Psychtoolbox's limitations
@@ -76,7 +78,6 @@ One dynamic that came up frequently in discussion within the context of the driv
 \section{Constructing the Task Frame}
 Control over the positioning and movement of objects within the 'real frame' was the primary motivation of the 
 
-% Talk about centrelines
 
 \begin{figure}[hbt!]
     \centering
@@ -86,6 +87,21 @@ Control over the positioning and movement of objects within the 'real frame' was
     \label{fig:Frame Comparison}
 \end{figure}
 
+% Talk about centrelines
+The dimensions of the road drawn on the screen correspond to the design standards of a typical Irish 'local road', contained within \citet{dotDesignManualUrban2013}. Those values are tabulated below:
+\begin{center}
+\begin{tabular}{|c|c|}\hline
+    Dimension           &   Value   \\\hline
+    Lane Width (m)      &   2.5     \\\hline
+    Line Length (m)     &   3.0     \\\hline
+    Line Gap    (m)     &   6.0     \\\hline
+    % \caption{Tablulated values of road dimensions from \citep{}}
+\end{tabular}
+\end{center}
+
+Every part of this setup is design to maximise the familiarity of the subject to their environment without adding additional distracting features which may influence their behaviour beyond what is appropriate for this study.
+
+The inclusion of the centre lines was significantly more important and difficult to implement addition than would seem at first glance. They are required for the subject to be able to gather an intuitive sense of their speed during.
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{View Distance}
 With the introduction of OpenGL as a framework through which to process perspective more possibilities emerged.
@@ -98,15 +114,22 @@ With the introduction of OpenGL as a framework through which to process perspect
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Using EMG}
+% Why am I even using EMG & what does it look like
+Following the outline of the 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Completing the Task Construction}
-As the code governing the task grew in volume and complexity it became clear that if progression were to continue a new approach was required to structure it in a more manageable form. This lead to the conversion of much of the written 
+As the code governing the task grew in volume and complexity it became clear that if progression were to continue a new approach was required to structure it in a more manageable form. This lead to the conversion of much of the written code to an object-orientated programming (OOP) style. While time consuming this involved the creation of a 'result' object which streamlined the data aquisition \& analysis immensely. This conversion to OOP was only made possible by previous examination of the structure \& formatting of the modelling code during the preliminary work for this thesis.
+
+% Talk about patching all the edge cases/bugs here
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Piloting the Trial and Gathering Data}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Task Flaws \& Limitations}
+\section{Task Flaws, Limitations \& Edge Cases}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Data Analysis}
+\subsection{Reaction Times}
+Taking the minimum reaction time to be 200ms the reaction time distribution was generated. \citep{jainComparativeStudyVisual2015}
