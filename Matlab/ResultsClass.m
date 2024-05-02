@@ -160,55 +160,67 @@ classdef ResultsClass
             for i = 1:results.nTrials
 
                 figure;
-                tiledlayout(3, 1)
-                frameVector = 1:length(results.time{i});
+                t = tiledlayout(3, 1);
+                title(t, "Subject "+results.subjectCode(1)+" - Trial # "+ num2str(i))
+                xlabel(t, "Time (s)")
+                frameVector = (1:length(results.time{i}));
 
                 % Bike Position / View Distance Plot
-                nexttile
+                nexttile(t)
                 hold on
-                plot(frameVector, results.bikeY{i}', 'color', 'g')
-                plot(frameVector, results.withCarY{i}', 'color', 'b')
-                plot(frameVector(1:end-1), results.cameraView{i}(frameVector(1:end-1)), '--');
-                xlim([0 length(frameVector)])
+                p1 = plot(frameVector/60, results.bikeY{i}', 'color', 'g');
+                p2 = plot(frameVector/60, results.withCarY{i}', 'color', 'b');
+                p3 = plot((frameVector(1:end-1))/60, results.cameraView{i}(frameVector(1:end-1)), '--', 'LineWidth', 2, 'Color', [0.5, 0.5, 0.5]);
+                xlim([0 length(frameVector)/60])
                 ylim([0, round(max(max(results.cameraView{i}(frameVector(1:end-1)))))])
-                title("Bike Distance Remaining")
+                title("Object Distance from Camera Position")
                 ylabel("Distance (m)")
+                labels = {'Cyclists', 'Cars in Lane', 'View Distance'};
+                objects = [p1(1), p2(1), p3(1)];
+                legend(objects, labels)
                 hold off
 
                 % Speed Plot
-                nexttile
+                nexttile(t)
                 hold on
-                plot(frameVector, results.cameraV{i})
-                title("Speeds")
-                xlim([0 length(frameVector)])
+                plot(frameVector/60, results.cameraV{i})
+                title("Camera Speed")
+                xlim([0 length(frameVector)/60])
                 ylabel("Speed (m/s)")
                 hold off
 
                 % Button Presses
-                nexttile
-                buttons = results.buttonsPressed{i};
-                for j = 1:height(buttons)
-                   buttons(j, :) = buttons(j, :) + j; 
-                end
-                plot(frameVector(1:end-1), buttons')
-                set(gca,'YTick',[])
-                ylim([0 7])
+                nexttile(t)
+                buttons = results.buttonsPressed{i}([3, 4, 6], :);
+                buttonOffset = [];
                 
-                % Frame Timing Plots
-                if frameRTplot
-                    figure;
-                    frameTimesMS = results.time{i}*1000;
-                    hold on
-                    plot(frameVector, frameTimesMS)
-                    yline(mean(frameTimesMS))
-                    xlim([0 length(frameVector)])
-                    text(max(frameVector), mean(frameTimesMS), " Mean = "+mean(frameTimesMS)+"ms")
-                    title("Frame time")
-                    hold off
-                    xlabel("Frame")
+                for j = 1:height(buttons)
+                   buttons(j, :) = buttons(j, :) + j*1.5;
+                   buttonOffset = [buttonOffset, j*1.5];
                 end
-
-                results.averageFrameRate{i} = 1/mean(frameTimesMS);
+                plot((frameVector(1:end-1))/60, buttons')
+                set(gca,'YTick', [buttonOffset])
+                set(gca, 'YTickLabel', ["Up"; "Down"; "Right"])
+                ylabel("Button Presses")
+                title("Recorded Button Presses")
+                ylim([0 7])
+                xlim([0 length(frameVector(1:end-1))/60])
+                
+%                 % Frame Timing Plots
+%                 if frameRTplot
+%                     figure;
+%                     frameTimesMS = results.time{i}*1000;
+%                     hold on
+%                     plot(frameVector, frameTimesMS)
+%                     yline(mean(frameTimesMS))
+%                     xlim([0 length(frameVector)])
+%                     text(max(frameVector), mean(frameTimesMS), " Mean = "+mean(frameTimesMS)+"ms")
+%                     title("Frame time")
+%                     hold off
+%                     xlabel("Frame")
+%                 end
+% 
+%                 results.averageFrameRate{i} = 1/mean(frameTimesMS);
             
             end
 

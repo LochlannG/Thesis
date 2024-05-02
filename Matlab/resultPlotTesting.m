@@ -1,10 +1,9 @@
 % results stuff
 clc; close all
 figure
-t = tiledlayout(ceil(results.nTrials/3), 3);
+t = tiledlayout(ceil(results.nTrials/2), 2);
 
 results.givenFrameRT = 60;
-
 overtakeLasts = results.givenFrameRT*3; % length of an overtake, ignore all extra presses before that
 
 if length(results.buttonsPressed{2}) > length(results.time{2})
@@ -69,7 +68,7 @@ for i = 1:results.nTrials
     anyBike{i}          = any(seenBike{i});
     bikeStartFrames{i}  = diff(anyBike{i}) > 0;
     bikeEndFrames{i}    = diff(anyBike{i}) < 0;
-    
+    .
     % Counting the view distances when the bikes are visible
     
 
@@ -91,83 +90,3 @@ end
 title(t, "Position Summary")
 xlabel(t, "Frame")
 ylabel(t, "Distance (m)")
-%%
-% Reaction time plotting
-figure
-clc
-% close all
-clear indexesVisible
-indexesRecorded = [];
-
-for i = 1:results.nTrials
-    currentBikes = seenBike{i};
-    nBikes(i) = height(currentBikes);
-    
-    % Loop through all the bikes in the trial
-    for j = 1:nBikes(i)
-        
-        % Find when the objects are visible
-        try
-            indexesVisible(2) = find(currentBikes(j, :), 1, 'first');
-            indexesVisible(3) = find(currentBikes(j, :), 1, 'last');
-        catch
-            disp(["Trial # " num2str(i) " Stimulus # " num2str(j) " empty"])
-            indexesVisible(2:3) = nan(1, 2);
-        end
-        
-        indexesVisible(1) = i;
-        
-        % Append to variables
-        indexesRecorded = [indexesRecorded; indexesVisible];
-        
-    end
-    
-end
-
-% partialViewDist = []
-% for i = 1:length(indexesRecorded)
-%    currentTrial = indexesRecorded(i, 1);
-%    startIndex = indexesRecorded(i, 2);
-%    endIndex = indexesRecorded(i, 3);
-%    
-%    if isnan(startIndex)
-%        % Do nothing
-%    else
-%        partialViewDist = [partialViewDist; unique(results.cameraView{currentTrial}(startIndex:endIndex))];
-%    end
-% end
-
-%%
-
-% Bike on/off
-figure;
-hold on
-plot(diff(anyBike{i}), 'r')
-plot(anyBike{i}, 'g')
-plot(diff(anyCar{i}), 'r')
-plot(anyCar{i}, 'b')
-
-% Overtake presses & Speed
-figure;
-hold on
-plot(overtakePressed)
-plot(results.cameraV{i})
-
-% View Distances
-countViewDistances(results)
-
-function countViewDistances(results)
-    figure
-    t = tiledlayout(ceil(results.nTrials/3), 3);
-    title(t, "Position Summary")
-    xlabel(t, "Frame")
-
-    for i = 1:results.nTrials
-        nexttile
-        view = results.cameraView{i};
-        plot(diff(view))
-        title(['Trial # ', num2str(i)])
-        
-    end
-
-end
