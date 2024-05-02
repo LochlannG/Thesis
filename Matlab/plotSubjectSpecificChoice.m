@@ -19,7 +19,7 @@ function plotSubjectSpecificChoice(bikeTable, slowdown, overtake, subjectNames)
     proportions = 100*totalCon./sum(totalCon, 2);
     figure
     bar(proportions, 'stacked')
-    title("Proporition of Choice Made by Subject")
+    title("Proportion of Choice Made by Subject")
     set(gca, 'XTickLabel', subjectNames)
     xlabel("Subject"); ylabel("Proportion of Decision")
     legend("Slow Down", "Overtake")

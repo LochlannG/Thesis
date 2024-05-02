@@ -107,6 +107,7 @@ function [bikeTableOut, carTableOut] = binTrials(folder, filenames, plotOutputs)
 
         %% This Section records all the details specifically for cyclists
         indexesRecorded = [];
+        bikeStarts =[];
         for trialI = 1:results.nTrials
             currentBikes = seenBike{trialI};
             nBikes(trialI) = height(currentBikes);
@@ -118,15 +119,22 @@ function [bikeTableOut, carTableOut] = binTrials(folder, filenames, plotOutputs)
                 try
                     indexesVisible(2) = find(currentBikes(objectI, :), 1, 'first');
                     indexesVisible(3) = find(currentBikes(objectI, :), 1, 'last');
+                    if ~isempty(results.bikeStartLevels)
+                        bikeStartY = results.bikeStartLevels{trialI}(objectI);
+                    else
+                        bikeStartY = nan(1, 1);
+                    end
                 catch
                     disp("Trial # " + num2str(trialI) + " Stimulus # " + num2str(objectI) + " empty")
                     indexesVisible(2:3) = nan(1, 2);
+                    bikeStartY = nan(1, 1);
                 end
                 
                 indexesVisible(1) = trialI;
                 
                 % Append to variables
                 indexesRecorded = [indexesRecorded; indexesVisible];
+                bikeStarts      = [bikeStarts; bikeStartY];
                 
             end
             
@@ -135,6 +143,8 @@ function [bikeTableOut, carTableOut] = binTrials(folder, filenames, plotOutputs)
         partialViewDist = [];
         partialButtons  = [];
         partialGap      = [];
+        partialSpeed    = [];
+
         for trialI = 1:length(indexesRecorded)
             currentTrial = indexesRecorded(trialI, 1);
             startIndex = indexesRecorded(trialI, 2);
@@ -148,8 +158,11 @@ function [bikeTableOut, carTableOut] = binTrials(folder, filenames, plotOutputs)
                 cameraSnippet = results.cameraView{currentTrial}(startIndex:endIndex);
                 appendViewDist = mode(cameraSnippet);
                 gapSnippet = results.gap{currentTrial}(:, startIndex:endIndex);
+                speedSnippet = results.cameraV{currentTrial}(:, startIndex:endIndex);
                 buttonSnippet = buttons{currentTrial}([3, 4, 6], startIndex:endIndex);
-            
+
+
+
                 firstBT = nan(3, 1);
                 for objectI = 1:3
                     notFound = true;
@@ -185,10 +198,12 @@ function [bikeTableOut, carTableOut] = binTrials(folder, filenames, plotOutputs)
             
                 % Catch errors
                 if isnan(appendButton(1))
-                    appendButton(2) = nan(1, 1);
-                    appendGap = nan(1, 2);
+                    appendButton(2)     = nan(1, 1);
+                    appendGap           = nan(1, 2);
+                    appendSpeed         = nan(1, 1);
                 else
-                    appendGap = gapSnippet(:, appendButton(1))';
+                    appendGap           = gapSnippet(:, appendButton(1))';
+                    appendSpeed         = speedSnippet(:, appendButton(1))';
                 end
             
                 
@@ -197,6 +212,7 @@ function [bikeTableOut, carTableOut] = binTrials(folder, filenames, plotOutputs)
             partialViewDist = [partialViewDist; appendViewDist];
             partialButtons  = [partialButtons;  appendButton];
             partialGap      = [partialGap;      appendGap];
+            partialSpeed    = [partialSpeed;    appendSpeed];
             clear appendButton;
         end
 
@@ -216,11 +232,11 @@ function [bikeTableOut, carTableOut] = binTrials(folder, filenames, plotOutputs)
         
         
         % I want to plot them relative to the speed plots to see why the buttons were used so often
-        tableArray          = [indexesRecorded, indexesRecorded(:, 3)-indexesRecorded(:, 2), partialViewDist, partialButtons, partialGap];
-        varNames            = {'Subject', 'Bike Or Car', 'Trial', 'Start Index', 'End Index', 'Index Length', 'View Distance', 'Frame Pressed', 'Button Pressed', 'Actual Gap', 'Percieved Gap'};
+        tableArray          = [indexesRecorded, indexesRecorded(:, 3)-indexesRecorded(:, 2), partialViewDist, partialButtons, partialGap, partialSpeed, bikeStarts];
+        varNames            = {'Subject', 'Bike Or Car', 'Trial', 'Start Index', 'End Index', 'Index Length', 'View Distance', 'Frame Pressed', 'Button Pressed', 'Actual Gap', 'Percieved Gap', 'Speed', 'Bike Start Y'};
         subjectArray        = ones(length(indexesRecorded), 1)*subjectI;
         bikeOrCar           = ones(length(indexesRecorded), 1)*1;
-        fullTable           = table(subjectArray, bikeOrCar, tableArray(:, 1),tableArray(:, 2),tableArray(:, 3),tableArray(:, 4),tableArray(:, 5),tableArray(:, 6),tableArray(:, 7),tableArray(:, 8),tableArray(:, 9), 'VariableNames', varNames);
+        fullTable           = table(subjectArray, bikeOrCar, tableArray(:, 1),tableArray(:, 2),tableArray(:, 3),tableArray(:, 4),tableArray(:, 5),tableArray(:, 6),tableArray(:, 7),tableArray(:, 8),tableArray(:, 9),tableArray(:, 10),tableArray(:, 11), 'VariableNames', varNames);
         bikeTableOut.total   = [bikeTableOut.total; fullTable];
         bikeTableOut.(subjectNames(subjectI)) = fullTable;
 

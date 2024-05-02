@@ -8,6 +8,5 @@ function statResults = plotAnova(bikeTable)
     viewDis = reducedTable.("View Distance");
     pGap    = reducedTable.("Percieved Gap");
 
-    statTable = table(subject, viewDis, pGap, buttons)
-    statResults = anova(statTable, "buttons");
+    statResults = anovan(buttons, {subject, viewDis, pGap});
 end
