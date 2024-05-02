@@ -1,6 +1,7 @@
 %https://sisweb.ucd.ie/usis/!W_HU_MENU.P_PUBLISH?p_tag=GD-DOCLAND&ID=122
 
 \documentclass[11pt,oneside,openright,a4paper]{book}
+\usepackage[font=small, labelfont=bf]{caption}
 \usepackage[a4paper,lmargin=30mm, textwidth=160mm, tmargin=20mm, textheight=257mm]{geometry} %https://www.overleaf.com/learn/latex/Page_size_and_margins
 
 %One-and-a-half spacing shall be used, except for...
@@ -23,7 +24,7 @@
 \usepackage[en-IE]{datetime2}
 \DTMlangsetup[en-IE]{showdayofmonth=false}
 
-\usepackage{graphicx,subfiles,tocbibind,amsmath,array,url,pdflscape}
+\usepackage{graphicx,subfiles,tocbibind,amsmath,array,url,pdflscape, float}
 
 %***************************************************
 \usepackage[chapter]{algorithm}
@@ -59,7 +60,7 @@
 \hyphenation{op-ti-cal net-works semi-con-duc-tor}
 
 %***************************************************
-\setlength{\parindent}{5ex} %will be indented 10ex (an "ex" equals the lenght of the "x" in the current font)
+\setlength{\parindent}{5ex} %will be indented 10ex (an "ex" equals the length of the "x" in the current font)
 % \setlength{\parindent}{0pt}%no paragraph indent
 \iffalse
 	\setlength{\parskip}{1em}%Paragraph spacing
@@ -141,6 +142,9 @@
 \makeatother
 
 %***************************************************
+% User defined values
+\newcommand\plotHeight{0.8}
+%***************************************************
 
 \begin{document}
 
@@ -155,7 +159,7 @@
 		\subfile{sections/front/abstract}
 	\end{doublespace}
 	\subfile{sections/front/statement}
-	\subfile{sections/front/acknowledgements}
+	% \subfile{sections/front/acknowledgements}
 	\listoftables
 	\listoffigures
 \end{singlespace}
