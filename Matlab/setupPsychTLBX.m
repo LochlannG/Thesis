@@ -1,7 +1,6 @@
 function scrn = setupPsychTLBX()
-    
-    global GL
 
+    Screen('Preference', 'SkipSyncTests', 1)
     
     % Pulling important details from Screen() object
     scrn = struct();
