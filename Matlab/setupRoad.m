@@ -1,9 +1,9 @@
-function [road, verge, centreline] = setupRoad()
+function [road, verge, centreline] = setupRoad(trial)
 
     %%%%%%%%%%%%%%%%%%%%%%
     %%% Road setup
     road = struct();
-    road.drawDist = 100;
+    road.drawDist = trial.roadLength + 200;
     road.laneWidth = 2.5;
     road.totalWidth = road.laneWidth*2;                                                         % RSA local road standard
     road.vertexCoords = single([-road.laneWidth, 0, 0, ...

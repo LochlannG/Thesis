@@ -5,7 +5,7 @@ function test = setupTest()
     prompt              = {'Enter subject code:', 'nTrials:', 'Trials Distance (m):','EMG:'};
     dlgtitle            = 'Input';
     fieldsize           = [1 45; 1 45; 1 45; 1 45];
-    definput            = {'test','10', '2000', '1'};
+    definput            = {'test','1', '2000', '0'};
     answer              = inputdlg(prompt, dlgtitle, fieldsize, definput);
     
     % Variables to get about the subject & the test
@@ -18,8 +18,20 @@ function test = setupTest()
     % Variables that don't depend on the user
     test.recordEEG      = false;
     test.context        = 'urban';
-    test                = setupContext(test);
     test.debug          = 0;
     test.discreteSpeed  = true;
+
+    % Context
+    if test.context == 'rural'
+        test.rateCyclist        = 1  * round(test.lengthM/1000);
+        test.rateOncomingCar    = 3 * round(test.lengthM/1000);
+        test.rateInFlowCar      = 1  * round(test.lengthM/1000);
+
+    elseif test.context == 'urban'
+        test.rateCyclist        = 3 * round(test.lengthM/1000);
+        test.rateOncomingCar    = 5 * round(test.lengthM/1000);
+        test.rateInFlowCar      = 3 * round(test.lengthM/1000);
+
+    end
 
 end

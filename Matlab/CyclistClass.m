@@ -53,11 +53,12 @@ classdef CyclistClass
         end
 
         function cyclist = resetLoop(cyclist, test)
-            cyclist.stimStartM      = test.lengthM - getStimStarts(test.lengthM, 100, cyclist.spacing, test.rateCyclist, []);
+            cyclist.stimStartM      = test.lengthM - [200, 600, 1400, 2000]; %test.lengthM - getStimStarts(test.lengthM, 100, cyclist.spacing, test.rateCyclist, []);
             cyclist.n               = length(cyclist.stimStartM);
-            cyclist.speed           = getCyclistSpeed(14/3.6, 3/3.6, 2, cyclist.n);
-            cyclist.start           = getCyclistStartPos(cyclist.n);
+            cyclist.speed           = [14, 20, 14, 12]/3.6; %getCyclistSpeed(14/3.6, 3/3.6, 2, cyclist.n);
             cyclist.y               = ones(cyclist.n, 1)*100;%.*cyclist.start';
+
+            cyclist.start           = cyclist.y; %getCyclistStartPos(cyclist.n);
             cyclist.stimOn          = false(cyclist.n, 1);
             cyclist.stimGone        = false(cyclist.n, 1);
             cyclist.stimCurrent     = 1;

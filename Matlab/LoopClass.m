@@ -11,6 +11,8 @@ classdef LoopClass
         roadLeft
         speedUpLeft
         lengthShown
+        nBlocks
+        currentBlock
         
         % Timers
         eventOverTimer                                  % Timer counting down from when an event finishes
@@ -82,7 +84,7 @@ classdef LoopClass
 
         end
 
-        function [loop, speedo] = resetLoopVars(loop, camera, test, scrn, speedo)
+        function [loop] = resetLoopVars(loop, camera, test, scrn)%, speedo)
 
             % Counters
             loop.currentFrame       = 1;
@@ -126,7 +128,7 @@ classdef LoopClass
             loop.keysStore          = [];
             
             % Change other object values
-            speedo = speedo.relock(loop);
+%             speedo = speedo.relock(loop);
             
         end
 

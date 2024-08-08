@@ -23,10 +23,10 @@ cyclist                     = CyclistClass(road);
 cyclist                     = cyclist.getVertexes();
 
 % Setup Car objects
-towardsCar  = CarClass(road, "other");
+towardsCar  = CarClass(road, "right");
 towardsCar  = towardsCar.setEndingVals(0);
 towardsCar  = towardsCar.getVertexes();
-withCar     = CarClass(road, "this");
+withCar     = CarClass(road, "left");
 withCar     = withCar.setEndingVals(20);
 withCar     = withCar.getVertexes();
 
@@ -59,6 +59,8 @@ end
 
 %% %%%%%%%%%%%%%%%%%%%
 %%% Main trial loop
+
+test.trials = 1;
 
 while test.trials > 0
     
@@ -111,7 +113,6 @@ while test.trials > 0
     noise.yNoise            = getDiscreteViewDist(noise.levels);
     cyclist                 = cyclist.setEndingVals(noise.yNoise);
     withCar                 = withCar.setEndingVals(noise.yNoise);
-    
     
     %% %%%%%%%%%%%%%%%%%%%
     %%% OpenGL setup
@@ -284,4 +285,5 @@ Screen('CloseAll');
 %%% Saving and plotting results
 close all;
 results.saveResults();
+results.plotTrialSummary()
 % [results.bikeDist, results.carDist, results.car2Dist]   = results.plotGravityScoring();     
