@@ -22,4 +22,9 @@ function camera = setupCamera(car, road)
     camera.startSpeed               = (50/3.6);                             % Speed the car starts at
     camera.maxSpeed                 = car.maxSpeed;                         % Just copies the max speed from the car structure
     camera.absoluteMinSpeed         = (1/3.6);
+
+    % Handling overtaking acceleration values
+    camera.lateralAcc_Fly           = (1.12/3.6);                           % Based on values from M. Dozza et al., 2015
+    camera.lateralAcc_Acl           = (1.07/3.6);                           % Based on values from M. Dozza et al., 2015
+    camera.maxOvertakeWidth         = road.laneWidth;
 end

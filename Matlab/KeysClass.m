@@ -12,11 +12,15 @@ classdef KeysClass
         dw          % Down
         up          % Up
 
-        code        % Stores what keys have been pressed in the last frame
+        code        % Stores what keys have been pressed in the last frame (1x256 array)
+        oldBinary   % Records every relevent key pressed in the last frame in a (1x6 array)
+        nowBinary   % Records every relevent key pressed in this frame in a (1x6 array)
 
         breakFlag   % Break out of the trial loop
         escapeFlag  % Escape button pressed
         setOvertake % Set the thing to overtake
+
+        overTCounter% How many frames the right button has been pressed down
 
 
     end
@@ -35,45 +39,61 @@ classdef KeysClass
            
             [~, ~, keys.code] = KbCheck;    %Checks the keys that are down
             keys.breakFlag = false;         % Will close the loop if returned true, defaults to false
-            keyBinary = zeros(1, 6);        % Opens an all zero array to record which keys
+            keys.nowBinary = zeros(1, 6);   % Opens an all zero array to record which keys
             
             % Escape
             if all(keys.code(keys.escape)) && whichKeys(1) == 1
-                keyBinary(1) = 1;
+                keys.nowBinary(1) = 1;
                 keys.escapeFlag = true;
                 keys.breakFlag = true;
             end
 
             % Enter
             if all(keys.code(keys.enter)) && whichKeys(2) == 1
-                keyBinary(2) = 1;
+                keys.nowBinary(2) = 1;
                 keys.breakFlag = true;
             end
 
             % Up
             if all(keys.code(keys.up)) && whichKeys(3) == 1
-                keyBinary(3) = 1;
+                keys.nowBinary(3) = 1;
             end
 
             % Down
             if all(keys.code(keys.dw)) && whichKeys(4) == 1
-                keyBinary(4) = 1;
+                keys.nowBinary(4) = 1;
             end
 
             % Left
             if all(keys.code(keys.lt)) && whichKeys(5) == 1
-                keyBinary(5) = 1;
+                keys.nowBinary(5) = 1;
                 keys.setOvertake = false;
             end
             
             % Right
             if all(keys.code(keys.rt)) && whichKeys(6) == 1
-                keyBinary(6) = 1;
+
+                keys.nowBinary(6) = 1;
+
+                if keys.oldBinary(6) == 0
+                    % if the key wasn't down in the previous frame
+                    keys.overTCounter = 0;
+                else
+                    % if the key was down in the previous frame
+                    keys.overTCounter = keys.overTCounter + 1;
+                    disp(keys.overTCounter)
+                end
             end
             
             % Record which keys were pressed
-%             loop.keysPressed = keyBinary;
+            keys.oldBinary = keys.nowBinary;
         end
+
+%         function [keys, camera] = handleCamera(keys, camera)
+%             if keys.overtakingCounter == 0
+%                 camera.xyz(2) = camera.xyz(2) - camera.lateralAcc_Acl;
+%             end
+%         end
 
     end
 end
