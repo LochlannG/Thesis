@@ -4,6 +4,7 @@ classdef CameraClass
 
     properties
         fixPoint                                                    % Position the camera looks at (fixation point)
+        minSpeed                                                    % Minimum speed of the camera
         maxSpeed                                                    % Maximum speed of the camera
         maxOverTPos                                                 % Maximum x position change (m)
         vCurrent                                                    % Current speed (m/s)
@@ -26,7 +27,8 @@ classdef CameraClass
         FOVY                = 70;                                   % Field of view in the y direction
 
         % Constants for the movement of the camera
-        yAccl               = ((100/3.6)/9);                        % We are assuming this car is a 2015 Golf which does 0-100 in 9 secs https://www.guideautoweb.com/en/articles/27805/volkswagen-golf-tdi-versus-golf-tsi-2015-two-tests-over-4-000-km/
+        yAccl_up            = ((100/3.6)/9);                        % We are assuming this car is a 2015 Golf which does 0-100 in 9 secs https://www.guideautoweb.com/en/articles/27805/volkswagen-golf-tdi-versus-golf-tsi-2015-two-tests-over-4-000-km/
+        yAccl_down          = ((100/3.6)/4);
         xAccl_Flying        = 1.12;
         xAccl_Acclerative   = 1.07;
     end
@@ -46,10 +48,16 @@ classdef CameraClass
             camera.startFixPnt  = camera.fixPoint;
         end
 
-        function camera = setSpeed(camera, speed)
+        function camera = setSpeed(camera, givenSpeed)
             % SETSPEED set the speed of the camera to the given value (m/s)
             
-            camera.vCurrent = speed;
+            camera.vCurrent = givenSpeed;
+            if givenSpeed <= camera.maxSpeed
+                camera.vCurrent = givenSpeed;
+            else
+                disp("Max Speed Exceeded")
+                camera.vCurrent = camera.maxSpeed;
+            end
         end
 
         function camera = updatePos(camera, scrn, keys)
@@ -59,15 +67,33 @@ classdef CameraClass
             camera.xyz(2) = camera.xyz(2) + camera.vCurrent/scrn.frameRate;             % Move the position of the camera
             camera.fixPoint(2) = camera.fixPoint(2) + camera.vCurrent/scrn.frameRate;   % Move the fixation point of the camera so it doesn't spin around. It's actually pretty cool looking if you want to have a look disable this line.
             
-            if keys.overTCounter > 0
-                camera.xyz(1) = camera.xyz(1) + camera.xAccl_Flying/scrn.frameRate;
-
-                % Making sure that the cameras position doesn't exceed the
-                % set maximum
-                if camera.xyz(1) > camera.maxOverTPos; camera.xyz(1) = camera.maxOverTPos; end
-
+            % Check if its accelerative or flying overtake
+            if camera.vCurrent < camera.maxSpeed
+                xAccel = camera.xAccl_Acclerative;
             else
-                % Do nothing
+                xAccel = camera.xAccl_Flying;
+            end
+
+            % Overtaking handling, moving in and out
+            if keys.counter(6) > 0
+                % Move out, catch it if it goes to a maximum
+                camera.xyz(1) = camera.xyz(1) + xAccel/scrn.frameRate;
+                if camera.xyz(1) > camera.maxOverTPos; camera.xyz(1) = camera.maxOverTPos; end
+            elseif keys.counter(5) > 0
+                % Move back in, catch it if it goes to a minimum
+                camera.xyz(1) = camera.xyz(1) - xAccel/scrn.frameRate;
+                if camera.xyz(1) < camera.startxyz(1); camera.xyz(1) = camera.startxyz(1); end
+            end
+
+            % Speeding up & slowing down handling
+            if keys.counter(3) > 0
+                % Speed up the car
+                camera.vCurrent = camera.vCurrent + camera.yAccl_up/scrn.frameRate;
+                if camera.vCurrent >= camera.maxSpeed; camera.vCurrent = camera.maxSpeed; end
+            elseif keys.counter(4) > 0
+                % Slow down the car
+                camera.vCurrent = camera.vCurrent - camera.yAccl_down/scrn.frameRate;
+                if camera.vCurrent <= camera.minSpeed; camera.vCurrent = camera.minSpeed; end
             end
         end
 
@@ -78,6 +104,21 @@ classdef CameraClass
             camera.xyz          = camera.startxyz;
             camera.fixPoint     = camera.startFixPnt;
 
+        end
+
+        function camera = getCurrentMinSpeed(camera, cyclist, car2)
+            % Work out which object is in front and set that as the minimum
+            % speed
+
+            if and(cyclist.y < car2.y, cyclist.y > 0)
+                % If cyclist is in front
+                camera.minSpeed = cyclist.speed;
+            elseif and(car2.y < cyclist.y, car2 > 0)
+                % If car is in front
+                camera.minSpeed = car2.speed;
+            else
+                camera.minSpeed = camera.maxSpeed;
+            end
         end
 
         function xyz = getDriverPosition(camera, car, road)
@@ -96,8 +137,8 @@ classdef CameraClass
             % x position is determined by a load of ratios.
             xyz(1) = (-1) * (road.laneWidth - road.laneWidth*camera.lanePosRatio + car.width*0.5*camera.driverPosRatio);
             
-            % y position is just whatever I set it to be, likely -1
-            xyz(2) = -1;
+            % y position is just whatever I set it to be, likely 0
+            xyz(2) = 0;
             
             % z position will be the height of the driver
             xyz(3) = camera.driverZ;
