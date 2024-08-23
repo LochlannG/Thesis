@@ -41,6 +41,7 @@ classdef TrialClass
             % Add one to the current block counter
 
             trial.currentBlock = trial.currentBlock + 1;
+            trial.currentTrial = 1;
 
         end
 
@@ -52,10 +53,14 @@ classdef TrialClass
 
         end
 
-        function trial = resetTrial(trial)
+        function [trial, camera] = resetTrial(trial, camera)
             % RESETTRIAL Reset trial variables
             % At the top of a trial, reset the values which are
             % dependent on a single trial.
+
+            camera = camera.resetStartPosition;
+            camera = camera.setSpeed(200/3.6);
+
         end
 
         function printBlock(trial, scrn, keys)
@@ -67,7 +72,7 @@ classdef TrialClass
             textString = ['Current Block: ' num2str(trial.currentBlock) '\nPress Enter to Continue'];
             DrawFormattedText(scrn.win, textString, 'center', 'center', scrn.whit);
             Screen('Flip', scrn.win);
-        
+            
             while true
                 [~, ~, keys.code, ~] = KbCheck;
                 if keys.code(keys.enter) == 1

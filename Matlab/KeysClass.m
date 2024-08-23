@@ -33,6 +33,8 @@ classdef KeysClass
             keys.rt = KbName('RightArrow');
             keys.dw = KbName('DownArrow');
             keys.up = KbName('UpArrow');
+
+            keys.oldBinary = zeros(1, 6);
         end
 
         function keys = getKey(keys, whichKeys)
@@ -84,16 +86,16 @@ classdef KeysClass
                     disp(keys.overTCounter)
                 end
             end
+
+            % This is just an error checker to be sure that the overtaking
+            % thing doesn't keep going when the button hasn't been pressed.
+            if keys.oldBinary(6) == 0 && keys.nowBinary(6) == 0
+                keys.overTCounter = 0;
+            end
             
             % Record which keys were pressed
             keys.oldBinary = keys.nowBinary;
         end
-
-%         function [keys, camera] = handleCamera(keys, camera)
-%             if keys.overtakingCounter == 0
-%                 camera.xyz(2) = camera.xyz(2) - camera.lateralAcc_Acl;
-%             end
-%         end
 
     end
 end
