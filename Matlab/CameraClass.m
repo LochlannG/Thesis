@@ -1,5 +1,5 @@
 classdef CameraClass
-    %UNTITLED2 Summary of this class goes here
+    %CAMERACLASS 
     %   Detailed explanation goes here
 
     properties
@@ -60,7 +60,6 @@ classdef CameraClass
             camera.fixPoint(2) = camera.fixPoint(2) + camera.vCurrent/scrn.frameRate;   % Move the fixation point of the camera so it doesn't spin around. It's actually pretty cool looking if you want to have a look disable this line.
             
             if keys.overTCounter > 0
-                disp(keys.overTCounter)
                 camera.xyz(1) = camera.xyz(1) + camera.xAccl_Flying/scrn.frameRate;
 
                 % Making sure that the cameras position doesn't exceed the

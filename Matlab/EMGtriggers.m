@@ -1,4 +1,6 @@
 classdef EMGtriggers
+    %EMGTRIGGERS
+    % Note this is bugged, but the bones are here
     properties
         ioObj
         address
