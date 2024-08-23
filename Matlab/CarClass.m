@@ -48,7 +48,13 @@ classdef CarClass
         end
 
         function car = setSpeed(car, givenSpeed)
-            car.speed = givenSpeed;
+            if givenSpeed <= car.maxSpeed
+                car.speed = givenSpeed;
+            else
+                disp("Max Speed Exceeded")
+                car.speed = car.maxSpeed;
+            end
+            
         end
 
         function car = updateCarPos(car, scrn)

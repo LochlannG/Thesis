@@ -21,10 +21,12 @@ car                         = CarClass(road, "right");  % Create car class on th
 car                         = car.getVertexes();        % Create it's openGL parts
 
 car2                        = CarClass(road, "left");   % Create car class on the left hand side
-car2                        = car2.getVertexes();       % Create it's openGL parts
-car2                        = car2.setSpeed(35/3.6);    % Set the speed of this car
+car2                        = car2.getVertexes();       % Create it's openGL partsr
 
-camera                      = CameraClass(200/3.6, road.laneWidth, car, road);
+cyclist                     = CyclistClass(road);       % Create cyclist class
+cyclist                     = cyclist.getVertexes();    % Create it's openGL parts
+
+camera                      = CameraClass(200/3.6, road.laneWidth-0.5, car, road);
 keys                        = KeysClass();              % Create instance of the keys class
 
 %%%%%%%%%%%%%%%%%%%
@@ -36,14 +38,10 @@ while trial.currentBlock <= trial.nBlocks
     %%%%%%%%%%%%%%%%%%%
     %%% Displays a message to the user at the start of the block
     trial.printBlock(scrn, keys)
-
-    % Set up the car positions
-    car     = car.setPosition(200);
-    car2    = car2.setPosition(100);
     
     while trial.currentTrial < trial.nTrials + 1
 
-        trial.printTrial(scrn, 0.1);
+        % trial.printTrial(scrn, 0.1);
         
         %%%%%%%%%%%%%%%%%%%
         %%% OpenGL setup
@@ -56,6 +54,15 @@ while trial.currentBlock <= trial.nBlocks
         glClearColor(0.5, 0.5, 0.5, 1);         % Sets the background colour
     
         [trial, camera] = trial.resetTrial(camera);
+
+        % Set up the positions
+        car     = car.setPosition(200);
+        car2    = car2.setPosition(100);
+        cyclist = cyclist.setPosition(50);
+
+        % Set up the speeds
+        car2    = car2.setSpeed(35/3.6);    % Set the speed of this car
+        cyclist = cyclist.setSpeed(15/3.6); % Set the speed of this cyclist
 
         % Frame Loop
         while  camera.xyz(2) <= trial.roadLength
@@ -88,6 +95,7 @@ while trial.currentBlock <= trial.nBlocks
             %%%%%%%%%%%%%%%%%%%
             %%% Drawing objects
             % Drawing the various 'road users' to the screen
+            drawOpenGLObject([cyclist.x, cyclist.y, 0], [], [], cyclist, "Cube")
             drawOpenGLObject([car.x, car.y, 0], [], [], car, "Cube")
             drawOpenGLObject([car2.x, car2.y, 0], [], [], car2, "Cube")
 
@@ -101,12 +109,13 @@ while trial.currentBlock <= trial.nBlocks
             car = car.updateCarPos(scrn);
             
             % Get the keys values
-            keys = keys.getKey([1, 0, 1, 1, 0, 1]);
+            keys = keys.getKey([1, 0, 1, 1, 1, 1]);
             if keys.breakFlag == true
                 break;
             end
 
             % Update the position of the Camera
+            camera = camera.getCurrentMinSpeed(cyclist, car2);
             camera = camera.updatePos(scrn, keys);
             
             % Start another openGL session
