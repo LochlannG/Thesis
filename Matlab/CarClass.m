@@ -1,27 +1,19 @@
 classdef CarClass
     properties
         % Variables
-        x
-        y
-        n
-        speed
-        stimStartM
-        stimCurrent
-        stimOn
-        stimGone                    % The stimulus has disappeared
-        which
+        x       % What x position is the car in? (Distance from centreline)
+        y       % What y position is the car in? (Position along road)
+        speed   % What speed is the car going?
+        which   % Which lane is the car in
 
-        % OpenGL values
+        % OpenGL values, don't worry about it
         vertexCoords
         vertexColors
         elementArray
 
-        % Specific to the car in 'this' lane I should use a child class but cannot be bothered
-        potentialEnd                % The distance from the camera where the object can disappear
-
     end
     properties (Constant)
-        maxSpeed        = 80/3.6;
+        maxSpeed        = 50/3.6;
         start           = 80;
 
         chanceOfEnding  = 0.01           % Chance of ending per frame
@@ -37,11 +29,12 @@ classdef CarClass
     methods
         function car = CarClass(road, whichLane)
             car.which = whichLane;
-            if car.which == "other"
+            if car.which == "right"
                 car.x       = 0.5*road.laneWidth;
-                car.speed   = car.maxSpeed;
-            elseif car.which == "this"
+                car.speed   = -car.maxSpeed;
+            elseif car.which == "left"
                 car.x       = -0.5*road.laneWidth;
+                car.speed   = car.maxSpeed;
             end
         end
 
@@ -50,31 +43,17 @@ classdef CarClass
             car = getShapeVertexes(car, car.width, car.len, car.height, [1, 0, 0], "Cube");
         end
 
-        function car = setEndingVals(car, givenEnd)
-            car.potentialEnd    = givenEnd;
-        end
-
-        function car = resetLoop(car, test, cyclist, rate)
-            if car.which == "other"
-                car.stimStartM   = test.lengthM - getStimStarts(test.lengthM, car.start, car.spacing, rate, []);
-            elseif car.which == "this"
-                car.stimStartM   = test.lengthM - getStimStarts(test.lengthM, car.start, car.spacing, rate, test.lengthM-cyclist.stimStartM);
-            end
-            car.n            = length(car.stimStartM);
-            car.stimCurrent  = 1;
-            car.y            = ones(car.n, 1)*car.start;
-            car.stimOn       = false(car.n, 1);
-            car.stimGone     = false(car.n, 1);
-
+        function car = setPosition(car, startY)
+            car.y = startY;
         end
 
         function car = setSpeed(car, givenSpeed)
             car.speed = givenSpeed;
         end
-        
-        function car = handleMessup(car)
-            messups = and(car.stimOn, car.stimGone);
-            car.stimOn(messups) = false;
+
+        function car = updateCarPos(car, scrn)
+            car.y = car.y + car.speed/scrn.frameRate;
         end
+        
     end
 end
